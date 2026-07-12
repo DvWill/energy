@@ -21,6 +21,14 @@ Edite títulos, CTAs, benefícios, FAQ e contatos em `src/content/landing-page.t
 
 Os três arquivos oficiais estão organizados nesses caminhos e são utilizados no header, footer e favicon.
 
+## Animações
+
+A camada de movimento usa apenas `motion`. Curvas, durações, variantes e configuração de viewport ficam centralizadas em `src/lib/motion.ts`; as ilhas Client reutilizáveis ficam em `src/components/motion/`. O site respeita `prefers-reduced-motion` e mantém conteúdo, FAQ e navegação mobile acessíveis sem JavaScript.
+
+## Temas
+
+O seletor no header alterna entre os modos claro e escuro. Na primeira visita, o site acompanha `prefers-color-scheme`; depois, a escolha é preservada no navegador pela chave `energy-theme`. O tema é aplicado antes da hidratação para evitar mudança visual durante o carregamento.
+
 ## Integração de leads
 
 Copie `.env.example` para `.env.local`. Defina `NEXT_PUBLIC_SITE_URL` com o domínio canônico e `LEAD_WEBHOOK_URL` com um endpoint HTTPS de CRM, automação ou e-mail. O servidor envia JSON normalizado com `name`, `company`, `email`, `phone`, `message`, `source` e `submittedAt`. Sem webhook, a API responde 503 e a interface informa honestamente que o canal não está configurado.

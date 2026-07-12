@@ -2,20 +2,131 @@ import { expect, test } from "@playwright/test";
 
 test("jornada essencial da landing page", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Energia inteligente");
-  await expect(page.getByRole("link", { name: "Solicitar uma proposta" }).first()).toBeVisible();
-  await page.getByRole("navigation", { name: "Navegação principal" }).getByRole("link", { name: "FAQ" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(
+    "Energia inteligente",
+  );
+  await expect(
+    page.getByRole("link", { name: "Solicitar uma proposta" }).first(),
+  ).toBeVisible();
+  await page
+    .getByRole("navigation", { name: "Navegação principal" })
+    .getByRole("link", { name: "FAQ" })
+    .click();
   await expect(page).toHaveURL(/#faq/);
   const faq = page.getByRole("button", { name: "O que a Energy oferece?" });
-  await faq.click(); await expect(faq).toHaveAttribute("aria-expanded", "false");
+  await faq.click();
+  await expect(faq).toHaveAttribute("aria-expanded", "false");
   await page.getByRole("button", { name: "Enviar solicitação" }).click();
   await expect(page.getByText("Informe seu nome.")).toBeVisible();
 });
 
 test("menu mobile abre e fecha após navegação", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 }); await page.goto("/");
-  const menu = page.locator(".menu-button"); await menu.click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await expect(
+    page.getByRole("button", { name: /Ativar modo (claro|escuro)/ }),
+  ).toBeVisible();
+  const menu = page.locator(".menu-button");
+  await menu.click();
   await expect(menu).toHaveAttribute("aria-expanded", "true");
-  await page.getByRole("navigation", { name: "Navegação principal" }).getByRole("link", { name: "Quem somos" }).click();
-  await expect(page).toHaveURL(/#quem-somos/); await expect(page.getByRole("button", { name: "Abrir menu" })).toHaveAttribute("aria-expanded", "false");
+  await page.locator(".mobile-nav").getByRole("link", { name: "FAQ" }).focus();
+  await page.keyboard.press("Escape");
+  await expect(menu).toHaveAttribute("aria-expanded", "false");
+  await expect(menu).toBeFocused();
+  await menu.click();
+  await page
+    .getByRole("navigation", { name: "Menu mobile" })
+    .getByRole("link", { name: "Quem somos" })
+    .click();
+  await expect(page).toHaveURL(/#quem-somos/);
+  await expect(
+    page.getByRole("button", { name: "Abrir menu" }),
+  ).toHaveAttribute("aria-expanded", "false");
 });
+
+test("alterna o tema e preserva a escolha após recarregar", async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto("/");
+
+  const root = page.locator("html");
+  await expect(root).toHaveAttribute("data-theme", "dark");
+  await expect(page.locator("body")).toHaveCSS(
+    "background-color",
+    "rgb(10, 10, 11)",
+  );
+
+  await page.getByRole("button", { name: "Ativar modo claro" }).click();
+  await expect(root).toHaveAttribute("data-theme", "light");
+
+  await page.reload();
+  await expect(root).toHaveAttribute("data-theme", "light");
+  await page.getByRole("button", { name: "Ativar modo escuro" }).click();
+  await expect(root).toHaveAttribute("data-theme", "dark");
+});
+
+test("prefers-reduced-motion remove parallax, stagger e movimento contínuo", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+
+  const reveal = page.locator("[data-motion-reveal]").first();
+  await expect(reveal).toBeVisible();
+  await expect(reveal).toHaveCSS("opacity", "1");
+
+  const symbol = page.locator(".hero-logo-ghost");
+  const before = await symbol.evaluate(
+    (element) => getComputedStyle(element).transform,
+  );
+  await page.evaluate(() => scrollTo(0, document.body.scrollHeight / 2));
+  await page.waitForTimeout(100);
+  const after = await symbol.evaluate(
+    (element) => getComputedStyle(element).transform,
+  );
+  expect(after).toBe(before);
+
+  const faq = page.getByRole("button", { name: "Como começa o atendimento?" });
+  await faq.click();
+  await expect(faq).toHaveAttribute("aria-expanded", "true");
+  await expect(
+    page.getByRole("region", { name: "Como começa o atendimento?" }),
+  ).toBeVisible();
+});
+
+test("conteúdo essencial e navegação permanecem acessíveis sem JavaScript", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({
+    javaScriptEnabled: false,
+    viewport: { width: 390, height: 844 },
+  });
+  const page = await context.newPage();
+  await page.goto("/");
+
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(
+    page.getByRole("navigation", { name: "Menu mobile" }).getByRole("link", {
+      name: "FAQ",
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Os dados são enviados apenas ao endpoint configurado"),
+  ).toBeVisible();
+
+  await context.close();
+});
+
+for (const width of [320, 360, 768, 1024, 1440]) {
+  test(`não apresenta overflow horizontal em ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    const hasOverflow = await page.evaluate(
+      () =>
+        document.documentElement.scrollWidth >
+        document.documentElement.clientWidth,
+    );
+    expect(hasOverflow).toBe(false);
+  });
+}

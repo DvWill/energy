@@ -3,7 +3,9 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle, Send } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { leadSchema, type LeadInput } from "@/lib/validations";
+import { elementTransition, microTransition } from "@/lib/motion";
 const fields = [
   { name: "name", label: "Nome", type: "text", auto: "name" },
   { name: "company", label: "Empresa", type: "text", auto: "organization" },
@@ -15,6 +17,7 @@ export function LeadForm() {
     kind: "success" | "error";
     message: string;
   } | null>(null);
+  const reduced = useReducedMotion();
   const {
     register,
     handleSubmit,
@@ -27,8 +30,15 @@ export function LeadForm() {
   const submit = handleSubmit(async (data) => {
     setStatus(null);
     const endpoint = process.env.NEXT_PUBLIC_LEAD_FORM_URL ?? "/api/leads";
-    if (process.env.NEXT_PUBLIC_STATIC_HOST === "true" && !process.env.NEXT_PUBLIC_LEAD_FORM_URL) {
-      setStatus({ kind: "error", message: "O formulário ainda não está conectado neste ambiente. Configure um serviço de formulários externo para habilitar o envio." });
+    if (
+      process.env.NEXT_PUBLIC_STATIC_HOST === "true" &&
+      !process.env.NEXT_PUBLIC_LEAD_FORM_URL
+    ) {
+      setStatus({
+        kind: "error",
+        message:
+          "O formulário ainda não está conectado neste ambiente. Configure um serviço de formulários externo para habilitar o envio.",
+      });
       return;
     }
     try {
@@ -48,8 +58,12 @@ export function LeadForm() {
       });
     }
   });
+  const visibleStatus = isSubmitting
+    ? { kind: "loading" as const, message: "Enviando sua solicitação…" }
+    : status;
+
   return (
-    <form onSubmit={submit} noValidate>
+    <motion.form onSubmit={submit} noValidate aria-busy={isSubmitting}>
       {fields.map((f) => (
         <div className="field" key={f.name}>
           <label htmlFor={f.name}>{f.label}</label>
@@ -89,20 +103,73 @@ export function LeadForm() {
         />
       </div>
       <div className="check full">
-        <input id="consent" type="checkbox" {...register("consent")} />
+        <input
+          id="consent"
+          type="checkbox"
+          aria-invalid={!!errors.consent}
+          aria-describedby="consent-error"
+          {...register("consent")}
+        />
         <label htmlFor="consent">
           Li e concordo com a <a href="/privacidade">política de privacidade</a>
           .
         </label>
-        <span className="error">{errors.consent?.message}</span>
+        <span id="consent-error" className="error">
+          {errors.consent?.message}
+        </span>
       </div>
-      <button className="button full" disabled={isSubmitting}>
-        {isSubmitting ? <LoaderCircle className="spin" /> : <Send />}
-        {isSubmitting ? "Enviando…" : "Enviar solicitação"}
-      </button>
-      <p className={`form-status ${status?.kind ?? ""}`} aria-live="polite">
-        {status?.message}
-      </p>
-    </form>
+      <motion.button
+        className="button full"
+        disabled={isSubmitting}
+        whileHover={
+          reduced || isSubmitting ? undefined : { scale: 1.015, y: -1 }
+        }
+        whileTap={reduced || isSubmitting ? undefined : { scale: 0.99 }}
+        transition={microTransition}
+      >
+        <AnimatePresence initial={false} mode="wait">
+          <motion.span
+            className="form-submit-label"
+            key={isSubmitting ? "loading" : "idle"}
+            initial={reduced ? false : { opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduced ? undefined : { opacity: 0, y: -4 }}
+            transition={reduced ? { duration: 0 } : microTransition}
+          >
+            {isSubmitting ? (
+              <LoaderCircle className="spin" aria-hidden="true" />
+            ) : (
+              <Send aria-hidden="true" />
+            )}
+            {isSubmitting ? "Enviando…" : "Enviar solicitação"}
+          </motion.span>
+        </AnimatePresence>
+      </motion.button>
+      <motion.div
+        className={`form-status ${visibleStatus?.kind ?? ""}`}
+        data-motion-form-status=""
+        aria-live="polite"
+        aria-atomic="true"
+        animate={{
+          height: visibleStatus ? "auto" : 0,
+          opacity: visibleStatus ? 1 : 0,
+        }}
+        transition={reduced ? { duration: 0 } : elementTransition}
+      >
+        <AnimatePresence initial={false} mode="wait">
+          {visibleStatus && (
+            <motion.p
+              key={`${visibleStatus.kind}-${visibleStatus.message}`}
+              initial={reduced ? false : { opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduced ? undefined : { opacity: 0, y: -5 }}
+              transition={reduced ? { duration: 0 } : microTransition}
+            >
+              {visibleStatus.message}
+            </motion.p>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    </motion.form>
   );
 }

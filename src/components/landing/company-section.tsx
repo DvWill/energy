@@ -3,8 +3,15 @@
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import { Container } from "@/components/ui/container";
 import { withBasePath } from "@/lib/base-path";
+import {
+  elementTransition,
+  microTransition,
+  revealVariants,
+  viewportOnce,
+} from "@/lib/motion";
 
 const slides = [
   {
@@ -49,6 +56,7 @@ export function CompanySection() {
   const go = (next: number) =>
     setActive((next + slides.length) % slides.length);
   const slide = slides[active];
+  const reduced = useReducedMotion();
   return (
     <section
       id="quem-somos"
@@ -56,7 +64,14 @@ export function CompanySection() {
       aria-labelledby="company-title"
     >
       <Container>
-        <div className="company-lead">
+        <motion.div
+          className="company-lead"
+          data-motion-reveal=""
+          initial={reduced ? false : "hidden"}
+          whileInView="visible"
+          viewport={viewportOnce}
+          variants={revealVariants}
+        >
           <div>
             <span className="eyebrow dark">CONHEÇA A ENERGY</span>
             <h2 id="company-title">Quem somos?</h2>
@@ -69,9 +84,10 @@ export function CompanySection() {
             Uma equipe próxima, preparada para entender cada contexto e
             organizar os próximos passos com clareza.
           </p>
-        </div>
-        <div
+        </motion.div>
+        <motion.div
           className="company-carousel"
+          data-motion-reveal=""
           role="region"
           aria-roledescription="carrossel"
           aria-label="Conheça a Energy"
@@ -80,18 +96,34 @@ export function CompanySection() {
             if (event.key === "ArrowRight") go(active + 1);
           }}
           tabIndex={0}
+          initial={reduced ? false : "hidden"}
+          whileInView="visible"
+          viewport={viewportOnce}
+          variants={revealVariants}
         >
-          <div className="carousel-image">
+          <motion.div
+            className="carousel-image"
+            key={`image-${slide.src}`}
+            initial={reduced ? false : { opacity: 0.55, scale: 1.012 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={reduced ? { duration: 0 } : elementTransition}
+          >
             <Image
-              key={slide.src}
               src={withBasePath(slide.src)}
               alt={slide.alt}
               fill
               priority={active === 0}
               sizes="(max-width: 800px) 100vw, 66vw"
             />
-          </div>
-          <div className="carousel-copy" aria-live="polite">
+          </motion.div>
+          <motion.div
+            className="carousel-copy"
+            key={`copy-${slide.src}`}
+            aria-live="polite"
+            initial={reduced ? false : { opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={reduced ? { duration: 0 } : elementTransition}
+          >
             <span>{slide.eyebrow}</span>
             <h3>{slide.title}</h3>
             <p>{slide.text}</p>
@@ -99,36 +131,44 @@ export function CompanySection() {
               <strong>{String(active + 1).padStart(2, "0")}</strong>
               <span>/ {String(slides.length).padStart(2, "0")}</span>
             </div>
-          </div>
+          </motion.div>
           <div className="carousel-controls">
-            <button
+            <motion.button
               type="button"
               onClick={() => go(active - 1)}
               aria-label="Imagem anterior"
+              whileHover={reduced ? undefined : { scale: 1.055 }}
+              whileTap={reduced ? undefined : { scale: 0.96 }}
+              transition={microTransition}
             >
-              <ChevronLeft />
-            </button>
-            <button
+              <ChevronLeft aria-hidden="true" />
+            </motion.button>
+            <motion.button
               type="button"
               onClick={() => go(active + 1)}
               aria-label="Próxima imagem"
+              whileHover={reduced ? undefined : { scale: 1.055 }}
+              whileTap={reduced ? undefined : { scale: 0.96 }}
+              transition={microTransition}
             >
-              <ChevronRight />
-            </button>
+              <ChevronRight aria-hidden="true" />
+            </motion.button>
           </div>
           <div className="carousel-dots" aria-label="Selecionar imagem">
             {slides.map((item, index) => (
-              <button
+              <motion.button
                 key={item.src}
                 type="button"
                 className={index === active ? "active" : ""}
                 onClick={() => setActive(index)}
                 aria-label={`Mostrar imagem ${index + 1}: ${item.eyebrow}`}
                 aria-current={index === active ? "true" : undefined}
+                whileHover={reduced ? undefined : { scale: 1.15 }}
+                transition={microTransition}
               />
             ))}
           </div>
-        </div>
+        </motion.div>
       </Container>
     </section>
   );

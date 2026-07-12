@@ -3,12 +3,17 @@ import { ArrowUpRight } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { siteContent as c } from "@/content/landing-page";
 import { withBasePath } from "@/lib/base-path";
+import {
+  MotionLink,
+  Reveal,
+  RevealArticle,
+} from "@/components/motion/motion-primitives";
 
 export function SolutionsSection() {
   return (
     <section id="solucoes" className="section solutions-section">
       <Container>
-        <div className="solutions-intro">
+        <Reveal className="solutions-intro">
           <div className="section-heading">
             <span>ONDE A ENERGY ATUA</span>
             <h2>Soluções solares para diferentes necessidades.</h2>
@@ -17,10 +22,10 @@ export function SolutionsSection() {
             Da análise inicial ao cuidado com o sistema, cada etapa começa pelo
             entendimento do seu contexto.
           </p>
-        </div>
+        </Reveal>
         <div className="solutions-list">
           {c.solutions.map((item, index) => (
-            <article className="solution-card" key={item.title}>
+            <RevealArticle className="solution-card" key={item.title}>
               <div className="solution-media">
                 <Image
                   src={withBasePath(item.image)}
@@ -35,12 +40,12 @@ export function SolutionsSection() {
                 </span>
                 <h3>{item.title}</h3>
                 <p>{item.text}</p>
-                <a href="#contato">
+                <MotionLink href="#contato">
                   Conversar sobre esta solução{" "}
                   <ArrowUpRight aria-hidden="true" />
-                </a>
+                </MotionLink>
               </div>
-            </article>
+            </RevealArticle>
           ))}
         </div>
       </Container>

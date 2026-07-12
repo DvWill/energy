@@ -3,13 +3,14 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { FaqSection } from "@/components/landing/faq-section";
 import { SolutionsSection } from "@/components/landing/solutions-section";
 import { CompanySection } from "@/components/landing/company-section";
+import { HeroSection } from "@/components/landing/hero-section";
+import { siteContent as c } from "@/content/landing-page";
 import {
   Benefits,
   Contact,
   Differentiators,
   Evidence,
   FinalCta,
-  Hero,
   ProblemSolution,
   Process,
 } from "@/components/landing/landing-sections";
@@ -22,7 +23,7 @@ export default function Home() {
       </a>
       <SiteHeader />
       <main id="conteudo">
-        <Hero />
+        <HeroSection primaryCta={c.cta.primary} />
         <ProblemSolution />
         <SolutionsSection />
         <Benefits />

@@ -6,8 +6,11 @@ export const siteContent = {
       "Converse com a Energy sobre energia solar e descubra o caminho mais adequado para a sua necessidade.",
   },
   contact: {
+    // PENDENTE: substituir pelo e-mail comercial oficial.
     email: "[E-MAIL PENDENTE]",
+    // PENDENTE: informar a URL oficial do WhatsApp, incluindo o número com DDI.
     whatsappUrl: "",
+    // PENDENTE: informar cidades, estados ou regiões efetivamente atendidas.
     location: "[ÁREA DE ATENDIMENTO PENDENTE]",
   },
   navigation: [
@@ -29,9 +32,13 @@ export const siteContent = {
     trust: "Contato direto • Retorno conforme disponibilidade da equipe",
   },
   trust: [
+    // PENDENTE: substituir apenas por segmentos efetivamente atendidos.
     "[SEGMENTOS ATENDIDOS]",
+    // PENDENTE: publicar somente certificação oficial e verificável.
     "[CERTIFICAÇÃO]",
+    // PENDENTE: publicar somente cliente ou parceiro com autorização.
     "[CLIENTE OU PARCEIRO]",
+    // PENDENTE: publicar somente indicador comercial mensurado e verificável.
     "[INDICADOR REAL]",
   ],
   problem: {
@@ -134,7 +141,9 @@ export const siteContent = {
       energy: "Contexto organizado para avaliar",
     },
   ],
+  // PENDENTE: adicionar somente métricas/resultados reais e verificáveis.
   metrics: [],
+  // PENDENTE: adicionar somente depoimento/case real, autorizado e identificável.
   testimonial: null,
   faq: [
     {
@@ -163,6 +172,7 @@ export const siteContent = {
     },
   ],
   pending: [
+    // PENDENTE: remover cada item desta lista somente após preencher e validar o dado.
     "Segmentos atendidos",
     "Serviços solares incluídos",
     "Cliente ideal",
