@@ -24,7 +24,7 @@ function applyTheme(theme: Theme) {
   root.style.colorScheme = theme;
   document
     .querySelector('meta[name="theme-color"]')
-    ?.setAttribute("content", theme === "dark" ? "#0a0a0a" : "#ffffff");
+    ?.setAttribute("content", theme === "dark" ? "#061522" : "#ffffff");
 }
 
 function subscribe(callback: () => void) {

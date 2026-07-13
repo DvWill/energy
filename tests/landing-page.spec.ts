@@ -54,7 +54,7 @@ test("alterna o tema e preserva a escolha após recarregar", async ({
   await expect(root).toHaveAttribute("data-theme", "dark");
   await expect(page.locator("body")).toHaveCSS(
     "background-color",
-    "rgb(10, 10, 11)",
+    "rgb(6, 21, 34)",
   );
 
   await page.getByRole("button", { name: "Ativar modo claro" }).click();
