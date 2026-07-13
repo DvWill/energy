@@ -24,12 +24,13 @@ export const siteContent = {
     secondary: "Falar com um especialista",
   },
   hero: {
-    eyebrow: "ENERGIA SOLAR • PROJETO ORIENTADO À SUA NECESSIDADE",
-    titleStart: "Energia solar para uma escolha",
-    titleAccent: "mais consciente.",
+    eyebrow: "ENERGIA SOLAR • ENERGY",
+    titleStart: "Energia inteligente",
+    titleMiddle: "para um futuro mais",
+    titleAccent: "eficiente.",
     description:
-      "A Energy entende o seu perfil de consumo e o contexto do imóvel para orientar os próximos passos de uma solução de energia solar.",
-    trust: "Contato direto • Retorno conforme disponibilidade da equipe",
+      "Soluções solares orientadas ao seu consumo, ao seu espaço e às decisões que realmente importam.",
+    trust: "Atendimento próximo, do primeiro contato à proposta.",
   },
   trust: [
     // PENDENTE: substituir apenas por segmentos efetivamente atendidos.

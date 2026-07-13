@@ -1,5 +1,18 @@
 import { expect, test } from "@playwright/test";
 
+test("renderiza sem erros de console ou hidratação", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "dark" });
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await page.waitForTimeout(250);
+  expect(errors).toEqual([]);
+});
+
 test("jornada essencial da landing page", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
@@ -116,6 +129,38 @@ test("conteúdo essencial e navegação permanecem acessíveis sem JavaScript", 
   ).toBeVisible();
 
   await context.close();
+});
+
+test("links legais levam às páginas publicadas", async ({ page }) => {
+  await page.goto("/");
+  await page
+    .getByRole("contentinfo")
+    .getByRole("link", { name: "Privacidade" })
+    .click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Política de privacidade",
+  );
+  await page.getByRole("link", { name: "Voltar" }).click();
+  await page
+    .getByRole("contentinfo")
+    .getByRole("link", { name: "Termos de uso" })
+    .click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Termos de uso",
+  );
+});
+
+test("API de leads rejeita formato e payload acima do limite", async ({
+  request,
+}) => {
+  const wrongType = await request.post("/api/leads", { data: "invalid" });
+  expect(wrongType.status()).toBe(415);
+
+  const oversized = await request.post("/api/leads", {
+    headers: { "content-type": "application/json" },
+    data: { message: "x".repeat(33_000) },
+  });
+  expect(oversized.status()).toBe(413);
 });
 
 for (const width of [320, 360, 768, 1024, 1440]) {

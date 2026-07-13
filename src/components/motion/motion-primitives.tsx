@@ -1,12 +1,8 @@
 "use client";
 
 import { Children, type ComponentProps, type ReactNode } from "react";
-import {
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from "motion/react";
+import { motion, useScroll, useTransform } from "motion/react";
+import { useAccessibleMotion } from "@/hooks/use-accessible-motion";
 import {
   microTransition,
   revealVariants,
@@ -23,7 +19,7 @@ type RevealProps = {
 };
 
 export function Reveal({ children, className, delay = 0 }: RevealProps) {
-  const reduced = useReducedMotion();
+  const reduced = useAccessibleMotion();
   return (
     <motion.div
       className={className}
@@ -44,7 +40,7 @@ export function RevealArticle({
   className,
   ...props
 }: ComponentProps<typeof motion.article>) {
-  const reduced = useReducedMotion();
+  const reduced = useAccessibleMotion();
   return (
     <motion.article
       {...props}
@@ -67,7 +63,7 @@ export function StaggerGrid({
   className,
   interactive = false,
 }: RevealProps & { interactive?: boolean }) {
-  const reduced = useReducedMotion();
+  const reduced = useAccessibleMotion();
   return (
     <motion.div
       className={className}
@@ -94,7 +90,7 @@ export function StaggerGrid({
 }
 
 export function StaggerList({ children, className }: RevealProps) {
-  const reduced = useReducedMotion();
+  const reduced = useAccessibleMotion();
   return (
     <motion.ol
       className={className}
@@ -121,7 +117,7 @@ export function MotionLink({
   children,
   ...props
 }: ComponentProps<typeof motion.a>) {
-  const reduced = useReducedMotion();
+  const reduced = useAccessibleMotion();
   return (
     <motion.a
       {...props}
@@ -135,7 +131,7 @@ export function MotionLink({
 }
 
 export function DiagonalDivider() {
-  const reduced = useReducedMotion();
+  const reduced = useAccessibleMotion();
   const { scrollYProgress } = useScroll();
   const y = useTransform(scrollYProgress, [0, 1], [-8, 8]);
   return (

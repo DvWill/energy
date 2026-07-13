@@ -2,24 +2,28 @@ import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { siteContent as c } from "@/content/landing-page";
+import { withBasePath } from "@/lib/base-path";
 const geist = Geist({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-geist",
 });
-const url = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const url = (
+  process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+).replace(/\/$/, "");
 const themeScript = `(function(){try{var saved=localStorage.getItem("energy-theme");var theme=saved==="light"||saved==="dark"?saved:(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");var root=document.documentElement;root.dataset.theme=theme;root.style.colorScheme=theme;}catch(e){}})();`;
 export const metadata: Metadata = {
   metadataBase: new URL(url),
   title: c.seo.title,
   description: c.seo.description,
-  alternates: { canonical: "/" },
+  alternates: { canonical: url },
   openGraph: {
     title: c.seo.title,
     description: c.seo.description,
     type: "website",
     locale: "pt_BR",
     siteName: "Energy",
+    url,
   },
   twitter: {
     card: "summary",
@@ -27,7 +31,7 @@ export const metadata: Metadata = {
     description: c.seo.description,
   },
   robots: { index: true, follow: true },
-  manifest: "/manifest.webmanifest",
+  manifest: withBasePath("/manifest.webmanifest"),
 };
 export const viewport: Viewport = {
   width: "device-width",
@@ -40,7 +44,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className={geist.variable} suppressHydrationWarning>
+    <html
+      lang="pt-BR"
+      className={geist.variable}
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

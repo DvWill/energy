@@ -3,9 +3,10 @@
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import { Container } from "@/components/ui/container";
 import { withBasePath } from "@/lib/base-path";
+import { useAccessibleMotion } from "@/hooks/use-accessible-motion";
 import {
   elementTransition,
   microTransition,
@@ -15,35 +16,35 @@ import {
 
 const slides = [
   {
-    src: "/images/company/energy-team.png",
+    src: "/images/company/equipe-energy.webp",
     alt: "Equipe Energy na recepção da empresa",
     eyebrow: "QUEM SOMOS",
     title: "Estrutura real. Contato humano.",
     text: "Um ambiente preparado para receber demandas, desenvolver projetos e aproximar pessoas das decisões sobre energia.",
   },
   {
-    src: "/images/company/01Planejamento.png",
+    src: "/images/company/planejamento.webp",
     alt: "Ambiente de planejamento da Energy",
     eyebrow: "PLANEJAMENTO",
     title: "Cada projeto começa com contexto.",
     text: "Organização e análise para transformar necessidades em próximos passos claros.",
   },
   {
-    src: "/images/company/02Conhecimento técnico.png",
+    src: "/images/company/conhecimento-tecnico.webp",
     alt: "Profissional da Energy apresentando um inversor solar",
     eyebrow: "CONHECIMENTO TÉCNICO",
     title: "Tecnologia explicada com clareza.",
     text: "A proximidade entre pessoas e equipamentos faz parte de uma decisão mais bem orientada.",
   },
   {
-    src: "/images/company/03Novas tecnologias.png",
+    src: "/images/company/novas-tecnologias.webp",
     alt: "Carregador elétrico de parede em demonstração",
     eyebrow: "NOVAS TECNOLOGIAS",
     title: "Energia em constante evolução.",
     text: "Acompanhamos tecnologias que ampliam as possibilidades de uso inteligente da energia.",
   },
   {
-    src: "/images/company/04Atendimento próximo.png",
+    src: "/images/company/atendimento-proximo.webp",
     alt: "Profissional de atendimento com a identidade da Energy",
     eyebrow: "ATENDIMENTO",
     title: "Uma conversa próxima desde o início.",
@@ -56,7 +57,7 @@ export function CompanySection() {
   const go = (next: number) =>
     setActive((next + slides.length) % slides.length);
   const slide = slides[active];
-  const reduced = useReducedMotion();
+  const reduced = useAccessibleMotion();
   return (
     <section
       id="quem-somos"

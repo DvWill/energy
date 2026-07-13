@@ -2,14 +2,11 @@
 
 import Image from "next/image";
 import { ArrowRight, Check, ChevronDown } from "lucide-react";
-import {
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from "motion/react";
+import { motion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
 import { withBasePath } from "@/lib/base-path";
+import { siteContent as c } from "@/content/landing-page";
+import { useAccessibleMotion } from "@/hooks/use-accessible-motion";
 import {
   heroContainerVariants,
   heroItemVariants,
@@ -20,7 +17,7 @@ import {
 
 export function HeroSection({ primaryCta }: { primaryCta: string }) {
   const ref = useRef<HTMLElement>(null);
-  const reduced = useReducedMotion();
+  const reduced = useAccessibleMotion();
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end start"],
@@ -47,6 +44,7 @@ export function HeroSection({ primaryCta }: { primaryCta: string }) {
             alt=""
             width={639}
             height={644}
+            loading="eager"
           />
         </motion.div>
         <motion.div
@@ -59,6 +57,7 @@ export function HeroSection({ primaryCta }: { primaryCta: string }) {
             width={639}
             height={644}
             priority
+            loading="eager"
             sizes="(max-width: 850px) 42vw, 24vw"
           />
         </motion.div>
@@ -75,15 +74,14 @@ export function HeroSection({ primaryCta }: { primaryCta: string }) {
           data-motion-reveal=""
           variants={heroItemVariants}
         >
-          ENERGIA SOLAR • ENERGY
+          {c.hero.eyebrow}
         </motion.span>
         <motion.h1 data-motion-reveal="" variants={heroItemVariants}>
-          <span>Energia inteligente</span> <span>para um futuro mais</span>{" "}
-          <em>eficiente.</em>
+          <span>{c.hero.titleStart}</span> <span>{c.hero.titleMiddle}</span>{" "}
+          <em>{c.hero.titleAccent}</em>
         </motion.h1>
         <motion.p data-motion-reveal="" variants={heroItemVariants}>
-          Soluções solares orientadas ao seu consumo, ao seu espaço e às
-          decisões que realmente importam.
+          {c.hero.description}
         </motion.p>
         <motion.div
           className="actions"
@@ -110,8 +108,7 @@ export function HeroSection({ primaryCta }: { primaryCta: string }) {
           </motion.a>
         </motion.div>
         <motion.small data-motion-reveal="" variants={heroItemVariants}>
-          <Check aria-hidden="true" /> Atendimento próximo, do primeiro contato
-          à proposta.
+          <Check aria-hidden="true" /> {c.hero.trust}
         </motion.small>
       </motion.div>
       <motion.a

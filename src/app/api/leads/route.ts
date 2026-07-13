@@ -1,7 +1,20 @@
 import { NextResponse } from "next/server";
 import { leadSchema } from "@/lib/validations";
 
+const MAX_BODY_BYTES = 32_000;
+
 export async function POST(request: Request) {
+  if (!request.headers.get("content-type")?.includes("application/json"))
+    return NextResponse.json(
+      { message: "Envie os dados no formato JSON." },
+      { status: 415 },
+    );
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES)
+    return NextResponse.json(
+      { message: "A solicitação excede o tamanho permitido." },
+      { status: 413 },
+    );
   let body: unknown;
   try {
     body = await request.json();
@@ -28,8 +41,23 @@ export async function POST(request: Request) {
       },
       { status: 503 },
     );
+  let webhookUrl: URL;
   try {
-    const response = await fetch(webhook, {
+    webhookUrl = new URL(webhook);
+    if (
+      webhookUrl.protocol !== "https:" ||
+      webhookUrl.username ||
+      webhookUrl.password
+    )
+      throw new Error("invalid webhook");
+  } catch {
+    return NextResponse.json(
+      { message: "O canal de envio está configurado de forma inválida." },
+      { status: 503 },
+    );
+  }
+  try {
+    const response = await fetch(webhookUrl, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({

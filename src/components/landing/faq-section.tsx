@@ -1,9 +1,10 @@
 "use client";
 import { useState, useSyncExternalStore } from "react";
 import { ChevronDown } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import { siteContent as c } from "@/content/landing-page";
 import { Container } from "@/components/ui/container";
+import { useAccessibleMotion } from "@/hooks/use-accessible-motion";
 import {
   accordionVariants,
   instantAccordionVariants,
@@ -23,7 +24,7 @@ export function FaqSection() {
     () => true,
     () => false,
   );
-  const reduced = useReducedMotion();
+  const reduced = useAccessibleMotion();
   return (
     <section id="faq" className="section">
       <Container>

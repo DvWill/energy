@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Menu, X } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { siteContent as c } from "@/content/landing-page";
 import { Brand } from "@/components/ui/brand";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { elementTransition, menuVariants, microTransition } from "@/lib/motion";
+import { useAccessibleMotion } from "@/hooks/use-accessible-motion";
 
 const subscribeToHydration = () => () => {};
 
@@ -13,7 +14,7 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
-  const reduced = useReducedMotion();
+  const reduced = useAccessibleMotion();
   const hydrated = useSyncExternalStore(
     subscribeToHydration,
     () => true,

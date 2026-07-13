@@ -1,11 +1,13 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle, Send } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { leadSchema, type LeadInput } from "@/lib/validations";
 import { elementTransition, microTransition } from "@/lib/motion";
+import { useAccessibleMotion } from "@/hooks/use-accessible-motion";
 const fields = [
   { name: "name", label: "Nome", type: "text", auto: "name" },
   { name: "company", label: "Empresa", type: "text", auto: "organization" },
@@ -17,7 +19,7 @@ export function LeadForm() {
     kind: "success" | "error";
     message: string;
   } | null>(null);
-  const reduced = useReducedMotion();
+  const reduced = useAccessibleMotion();
   const {
     register,
     handleSubmit,
@@ -47,9 +49,20 @@ export function LeadForm() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify(data),
       });
-      const json = (await res.json()) as { message: string };
-      if (!res.ok) throw new Error(json.message);
-      setStatus({ kind: "success", message: json.message });
+      const responseBody: unknown = await res.json().catch(() => null);
+      const message =
+        responseBody &&
+        typeof responseBody === "object" &&
+        "message" in responseBody &&
+        typeof responseBody.message === "string"
+          ? responseBody.message
+          : null;
+      if (!res.ok)
+        throw new Error(message ?? "Não foi possível concluir o envio.");
+      setStatus({
+        kind: "success",
+        message: message ?? "Solicitação enviada com sucesso.",
+      });
       reset();
     } catch (e) {
       setStatus({
@@ -111,8 +124,8 @@ export function LeadForm() {
           {...register("consent")}
         />
         <label htmlFor="consent">
-          Li e concordo com a <a href="/privacidade">política de privacidade</a>
-          .
+          Li e concordo com a{" "}
+          <Link href="/privacidade">política de privacidade</Link>.
         </label>
         <span id="consent-error" className="error">
           {errors.consent?.message}
