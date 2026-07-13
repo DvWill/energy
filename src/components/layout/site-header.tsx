@@ -74,13 +74,10 @@ export function SiteHeader() {
           boxShadow: scrolled
             ? "0 14px 38px rgba(0,0,0,.24)"
             : "0 10px 34px rgba(0,0,0,.16)",
-          backgroundColor: scrolled
-            ? "rgba(16,16,17,.96)"
-            : "rgba(20,20,21,.90)",
         }}
         transition={reduced ? { duration: 0 } : elementTransition}
       >
-        <a href="#inicio" className="logo-link">
+        <a href="#inicio" className="logo-link" aria-label="Energy — início">
           <Brand />
         </a>
         <nav className="nav desktop-nav" aria-label="Navegação principal">
