@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
   ).replace(/\/$/, "");
   return {
-    rules: { userAgent: "*", allow: "/", disallow: "/api/" },
+    rules: { userAgent: "*", allow: "/", disallow: ["/api/", "/admin/"] },
     sitemap: `${base}/sitemap.xml`,
   };
 }

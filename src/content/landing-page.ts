@@ -14,10 +14,11 @@ export const siteContent = {
     location: "[ÁREA DE ATENDIMENTO PENDENTE]",
   },
   navigation: [
-    { label: "Soluções", href: "#solucoes" },
-    { label: "Quem somos", href: "#quem-somos" },
-    { label: "Processo", href: "#processo" },
-    { label: "FAQ", href: "#faq" },
+    { label: "Soluções", href: "/#solucoes" },
+    { label: "Quem somos", href: "/#quem-somos" },
+    { label: "Processo", href: "/#processo" },
+    { label: "FAQ", href: "/#faq" },
+    { label: "BLOG", href: "/blog" },
   ],
   cta: {
     primary: "Solicitar uma proposta",

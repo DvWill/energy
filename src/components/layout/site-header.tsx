@@ -7,6 +7,7 @@ import { Brand } from "@/components/ui/brand";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { elementTransition, menuVariants, microTransition } from "@/lib/motion";
 import { useAccessibleMotion } from "@/hooks/use-accessible-motion";
+import { usePathname } from "next/navigation";
 
 const subscribeToHydration = () => () => {};
 
@@ -15,6 +16,7 @@ export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const reduced = useAccessibleMotion();
+  const pathname = usePathname();
   const hydrated = useSyncExternalStore(
     subscribeToHydration,
     () => true,
@@ -47,13 +49,15 @@ export function SiteHeader() {
           onClick={() => setOpen(false)}
           whileHover={reduced ? undefined : { x: 2 }}
           transition={microTransition}
+          className={item.href === "/blog" && pathname.startsWith("/blog") ? "active" : undefined}
+          aria-current={item.href === "/blog" && pathname.startsWith("/blog") ? "page" : undefined}
         >
           {item.label}
         </motion.a>
       ))}
       <motion.a
         className="button button-small"
-        href="#contato"
+        href="/#contato"
         tabIndex={mobile && hydrated && !open ? -1 : undefined}
         onClick={() => setOpen(false)}
         whileHover={reduced ? undefined : { scale: 1.025, y: -1 }}

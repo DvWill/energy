@@ -1,0 +1,1 @@
+export default function Loading() { return <main className="blog-page"><div className="container blog-skeleton" aria-label="Carregando publicações"><i /><i /><div><i /><i /><i /></div></div></main>; }

@@ -44,3 +44,19 @@ O workflow `.github/workflows/deploy-pages.yml` publica automaticamente a branch
 ## Publicação
 
 Execute `npm run build` e publique em uma plataforma compatível com Next.js (Node.js). Configure as variáveis de ambiente no provedor e valide domínio, webhook, favicon, consentimento e documentos legais no ambiente final.
+
+## Blog e painel editorial
+
+O blog público está disponível em `/blog` e o painel protegido em `/admin/blog`. O módulo usa Drizzle ORM com Neon PostgreSQL. A migration inicial está em `drizzle/0000_blog.sql`; para desenvolvimento, revise o diff e aplique o schema com `npm run db:push`.
+
+Configure no ambiente do servidor:
+
+- `DATABASE_URL`: conexão Neon com `sslmode=require`;
+- `AUTH_SECRET`: segredo aleatório com pelo menos 32 caracteres;
+- `ADMIN_EMAIL` e `ADMIN_PASSWORD_HASH`: acesso administrativo, usando hash bcrypt;
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` e `CLOUDINARY_API_SECRET`: upload de capas e imagens editoriais;
+- `NEXT_PUBLIC_SITE_URL`: URL canônica pública.
+
+Gere um hash de senha com `node -e "require('bcryptjs').hash(process.argv[1],12).then(console.log)" "SUA-SENHA"`. Nunca armazene a senha em texto puro ou envie variáveis privadas ao cliente.
+
+O blog depende de rotas dinâmicas, banco e sessões HTTP-only, portanto deve ser publicado em um runtime Next.js/Node (por exemplo, Vercel). A exportação estática para GitHub Pages continua adequada somente à landing; ela não suporta o blog, painel ou APIs.

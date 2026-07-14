@@ -27,8 +27,8 @@ export function SiteFooter() {
         </div>
         <div>
           <strong>Informações</strong>
-          <Link href="/privacidade">Privacidade</Link>
-          <Link href="/termos">Termos de uso</Link>
+          <a href="/privacidade">Privacidade</a>
+          <a href="/termos">Termos de uso</a>
         </div>
       </Container>
       <Container>
@@ -39,4 +39,3 @@ export function SiteFooter() {
     </footer>
   );
 }
-import Link from "next/link";

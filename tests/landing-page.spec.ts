@@ -163,6 +163,31 @@ test("API de leads rejeita formato e payload acima do limite", async ({
   expect(oversized.status()).toBe(413);
 });
 
+test("BLOG aparece após FAQ e abre a página pública", async ({ page }) => {
+  await page.goto("/");
+  const navigation = page.getByRole("navigation", {
+    name: "Navegação principal",
+  });
+  const links = await navigation.getByRole("link").allTextContents();
+  expect(links.indexOf("BLOG")).toBe(links.indexOf("FAQ") + 1);
+  await navigation.getByRole("link", { name: "BLOG" }).click();
+  await expect(page).toHaveURL(/\/blog/);
+  await expect(
+    page.getByRole("heading", {
+      level: 1,
+      name: "Informação para transformar energia.",
+    }),
+  ).toBeVisible();
+});
+
+test("painel do blog exige autenticação", async ({ page }) => {
+  await page.goto("/admin/blog");
+  await expect(page).toHaveURL(/\/admin\/login/);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Acesso administrativo" }),
+  ).toBeVisible();
+});
+
 for (const width of [320, 360, 768, 1024, 1440]) {
   test(`não apresenta overflow horizontal em ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
