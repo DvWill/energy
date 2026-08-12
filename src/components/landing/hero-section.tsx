@@ -2,84 +2,176 @@
 
 import Image from "next/image";
 import { ArrowRight, Check, ChevronDown } from "lucide-react";
-import { motion, useScroll, useTransform } from "motion/react";
-import { useRef } from "react";
-import { withBasePath } from "@/lib/base-path";
+import {
+  motion,
+  useMotionValue,
+  useScroll,
+  useSpring,
+  useTransform,
+  useInView,
+} from "motion/react";
+import { type PointerEvent, useRef } from "react";
+import { HeroLogo3D } from "@/components/landing/hero-logo-3d";
+import {
+  EyebrowReveal,
+  MagneticButton,
+  MotionLink,
+  TextReveal,
+} from "@/components/motion/motion-primitives";
 import { siteContent as c } from "@/content/landing-page";
-import { useAccessibleMotion } from "@/hooks/use-accessible-motion";
+import {
+  useAccessibleMotion,
+  useFinePointer,
+} from "@/hooks/use-accessible-motion";
 import {
   heroContainerVariants,
   heroItemVariants,
-  microTransition,
   motionDuration,
   motionEase,
+  motionParallax,
 } from "@/lib/motion";
+import { withBasePath } from "@/lib/base-path";
 
 export function HeroSection({ primaryCta }: { primaryCta: string }) {
   const ref = useRef<HTMLElement>(null);
   const reduced = useAccessibleMotion();
+  const heroInView = useInView(ref, { amount: 0.05 });
+  const finePointer = useFinePointer();
+  const cursorEnabled = finePointer && !reduced;
+  const cursorX = useMotionValue(0);
+  const cursorY = useMotionValue(0);
+  const smoothX = useSpring(cursorX, {
+    stiffness: 90,
+    damping: 22,
+    mass: 0.8,
+  });
+  const smoothY = useSpring(cursorY, {
+    stiffness: 90,
+    damping: 22,
+    mass: 0.8,
+  });
+  const tiltX = useTransform(
+    smoothY,
+    [-motionParallax.cursor, motionParallax.cursor],
+    [2.2, -2.2],
+  );
+  const tiltY = useTransform(
+    smoothX,
+    [-motionParallax.cursor, motionParallax.cursor],
+    [-2.8, 2.8],
+  );
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end start"],
   });
-  const layerNear = useTransform(scrollYProgress, [0, 1], [0, 26]);
-  const layerFar = useTransform(scrollYProgress, [0, 1], [0, 12]);
+  const layerFar = useTransform(
+    scrollYProgress,
+    [0, 1],
+    [0, motionParallax.heroFar],
+  );
+  const layerNear = useTransform(
+    scrollYProgress,
+    [0, 1],
+    [0, motionParallax.heroNear],
+  );
+
+  const moveHero = (event: PointerEvent<HTMLElement>) => {
+    if (!cursorEnabled || event.pointerType !== "mouse") return;
+    if (
+      event.target instanceof Element &&
+      event.target.closest(".hero-logo-model-shell")
+    ) {
+      cursorX.set(0);
+      cursorY.set(0);
+      return;
+    }
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const horizontal = ((event.clientX - bounds.left) / bounds.width - 0.5) * 2;
+    const vertical = ((event.clientY - bounds.top) / bounds.height - 0.5) * 2;
+    cursorX.set(horizontal * motionParallax.cursor);
+    cursorY.set(vertical * motionParallax.cursor);
+  };
+
+  const resetHero = () => {
+    cursorX.set(0);
+    cursorY.set(0);
+  };
 
   return (
-    <motion.section ref={ref} id="inicio" className="hero hero-image">
+    <motion.section
+      ref={ref}
+      id="inicio"
+      className="hero hero-image"
+      data-cursor-motion={cursorEnabled ? "enabled" : "disabled"}
+      data-hero-visible={heroInView ? "true" : "false"}
+      onPointerLeave={resetHero}
+      onPointerMove={moveHero}
+    >
+      <Image
+        className="hero-background"
+        src={withBasePath("/images/hero-solar-plant.webp")}
+        alt=""
+        fill
+        priority
+        sizes="(max-width: 680px) 160vh, (max-width: 900px) 150vh, 100vw"
+      />
+      <div className="hero-overlay" aria-hidden="true" />
+
+      <motion.div
+        aria-hidden="true"
+        className="hero-ambient-layer"
+        data-motion-parallax={reduced ? "disabled" : "enabled"}
+        style={reduced ? undefined : { y: layerFar }}
+      >
+        <span className="hero-ambient hero-ambient-one" />
+        <span className="hero-ambient hero-ambient-two" />
+        <span className="hero-energy-line hero-energy-line-one" />
+        <span className="hero-energy-line hero-energy-line-two" />
+      </motion.div>
+
       <div className="hero-logo-stage">
         <motion.div
-          className="hero-logo-ghost"
-          aria-hidden="true"
-          style={reduced ? undefined : { y: layerFar }}
-          animate={reduced ? undefined : { rotate: [-1.2, 1.2, -1.2] }}
-          transition={{
-            duration: 20,
-            ease: motionEase.standard,
-            repeat: Infinity,
-          }}
-        >
-          <Image
-            src={withBasePath("/brand/energy-symbol-orange.png")}
-            alt=""
-            width={639}
-            height={644}
-            loading="eager"
-          />
-        </motion.div>
-        <motion.div
-          className="hero-logo-focus"
+          className="hero-logo-scroll-layer"
+          data-motion-parallax={reduced ? "disabled" : "enabled"}
           style={reduced ? undefined : { y: layerNear }}
         >
-          <Image
-            src={withBasePath("/brand/energy-symbol-orange.png")}
-            alt="Símbolo Energy"
-            width={639}
-            height={644}
-            priority
-            loading="eager"
-            sizes="(max-width: 850px) 42vw, 24vw"
-          />
+          <motion.div
+            className="hero-logo-model-motion"
+            style={
+              cursorEnabled
+                ? {
+                    x: smoothX,
+                    y: smoothY,
+                    rotateX: tiltX,
+                    rotateY: tiltY,
+                  }
+                : undefined
+            }
+          >
+            <HeroLogo3D />
+          </motion.div>
         </motion.div>
       </div>
+
       <motion.div
         className="hero-message container"
         data-motion-hero=""
         initial={reduced ? false : "hidden"}
         animate="visible"
-        variants={heroContainerVariants}
+        variants={reduced ? undefined : heroContainerVariants}
       >
-        <motion.span
-          className="eyebrow"
-          data-motion-reveal=""
-          variants={heroItemVariants}
-        >
+        <EyebrowReveal className="eyebrow" immediate>
           {c.hero.eyebrow}
-        </motion.span>
-        <motion.h1 data-motion-reveal="" variants={heroItemVariants}>
-          <span>{c.hero.titleStart}</span> <span>{c.hero.titleMiddle}</span>{" "}
-          <em>{c.hero.titleAccent}</em>
-        </motion.h1>
+        </EyebrowReveal>
+        <TextReveal
+          as="h1"
+          immediate
+          lines={[
+            { content: c.hero.titleStart },
+            { content: c.hero.titleMiddle },
+            { content: c.hero.titleAccent, accent: true },
+          ]}
+        />
         <motion.p data-motion-reveal="" variants={heroItemVariants}>
           {c.hero.description}
         </motion.p>
@@ -88,44 +180,49 @@ export function HeroSection({ primaryCta }: { primaryCta: string }) {
           data-motion-reveal=""
           variants={heroItemVariants}
         >
-          <motion.a
-            className="button"
-            href="#contato"
-            whileHover={reduced ? undefined : { scale: 1.025, y: -1 }}
-            whileTap={reduced ? undefined : { scale: 0.985 }}
-            transition={microTransition}
-          >
-            {primaryCta}
+          <MagneticButton className="button hero-primary-cta" href="#contato">
+            <span>{primaryCta}</span>
             <ArrowRight aria-hidden="true" />
-          </motion.a>
-          <motion.a
-            className="hero-link"
-            href="#solucoes"
-            whileHover={reduced ? undefined : { x: 3 }}
-            transition={microTransition}
-          >
+          </MagneticButton>
+          <MotionLink className="hero-link" href="#solucoes">
             Conhecer soluções
-          </motion.a>
+          </MotionLink>
         </motion.div>
         <motion.small data-motion-reveal="" variants={heroItemVariants}>
           <Check aria-hidden="true" /> {c.hero.trust}
         </motion.small>
       </motion.div>
+
       <motion.a
         className="scroll-indicator"
         data-motion-reveal=""
-        href="#solucao"
+        href="#calculadora"
         aria-label="Ir para a próxima seção"
         initial={reduced ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{
           duration: motionDuration.element,
-          delay: reduced ? 0 : 0.72,
+          delay: reduced ? 0 : 0.78,
           ease: motionEase.standard,
         }}
       >
         <span>Continue</span>
-        <ChevronDown aria-hidden="true" />
+        <motion.span
+          className="scroll-indicator-icon"
+          animate={reduced || !heroInView ? { y: 0 } : { y: [0, 6, 0] }}
+          transition={
+            reduced
+              ? { duration: 0 }
+              : {
+                  duration: 1.8,
+                  ease: motionEase.inOut,
+                  repeat: Infinity,
+                  repeatDelay: 0.2,
+                }
+          }
+        >
+          <ChevronDown aria-hidden="true" />
+        </motion.span>
       </motion.a>
     </motion.section>
   );

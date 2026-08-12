@@ -57,9 +57,13 @@ export default function RootLayout({
       <body>
         <noscript>
           <style>{`
-            [data-motion-reveal], [data-motion-hero] {
+            [data-motion-reveal], [data-motion-hero],
+            [data-motion-text], [data-motion-text] *,
+            [data-motion-image], [data-motion-image] *,
+            [data-motion-parallax], [data-motion-carousel] {
               opacity: 1 !important;
               transform: none !important;
+              clip-path: none !important;
             }
             [data-motion-accordion] {
               height: auto !important;

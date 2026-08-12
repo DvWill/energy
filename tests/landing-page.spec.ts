@@ -1,16 +1,150 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
-test("renderiza sem erros de console ou hidratação", async ({ page }) => {
+const calculatorLabels = {
+  monthlyBill: "Valor médio mensal da conta de energia em reais",
+  slider: "Ajustar valor médio mensal da conta de energia",
+  calculate: "CLIQUE AQUI E VEJA O QUANTO VOCÊ PERDE",
+} as const;
+
+const chatLabels = {
+  trigger: "Abrir conversa para fazer uma simulação",
+  dialog: "Conversa para simulação de energia solar",
+} as const;
+
+function currencyPattern(value: number) {
+  const formatted = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value);
+  return new RegExp(
+    formatted.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s*"),
+  );
+}
+
+function watchRuntimeErrors(page: Page) {
   const errors: string[] = [];
   page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text());
   });
   page.on("pageerror", (error) => errors.push(error.message));
+  return errors;
+}
+
+async function configureCalculator(
+  page: Page,
+  monthlyBill = 1_000,
+  horizon: 1 | 5 | 10 | 25 = 5,
+) {
+  const calculator = page.locator("#calculadora");
+  const input = calculator.getByLabel(calculatorLabels.monthlyBill);
+  await input.fill(String(monthlyBill));
+  await input.blur();
+  await expect(input).toHaveValue(currencyPattern(monthlyBill));
+
+  const horizonButton = calculator.getByRole("button", {
+    name: `${horizon} ${horizon === 1 ? "ano" : "anos"}`,
+    exact: true,
+  });
+  await horizonButton.click();
+  await expect(horizonButton).toHaveAttribute("aria-pressed", "true");
+  return calculator;
+}
+
+async function revealCalculatorResult(page: Page) {
+  const calculator = page.locator("#calculadora");
+  await calculator
+    .getByRole("button", { name: calculatorLabels.calculate })
+    .click();
+  const result = calculator.locator('[data-calculator-result="visible"]');
+  await expect(result).toBeVisible();
+  return result;
+}
+
+async function openFloatingChat(page: Page) {
+  const trigger = page.getByRole("button", { name: chatLabels.trigger });
+  await trigger.click();
+  const dialog = page.getByRole("dialog", { name: chatLabels.dialog });
+  await expect(dialog).toBeVisible();
+  return { dialog, trigger };
+}
+
+async function startChat(dialog: Locator) {
+  await expect(
+    dialog.getByText(/Olá! Eu sou o assistente da ENERGY/),
+  ).toBeVisible();
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+  const monthlyBill = dialog.getByLabel("Valor médio da conta de luz");
+  await expect(monthlyBill).toBeVisible();
+  return monthlyBill;
+}
+
+async function expectNoHorizontalOverflow(page: Page) {
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          document.documentElement.scrollWidth >
+          document.documentElement.clientWidth,
+      ),
+    )
+    .toBe(false);
+}
+
+test("renderiza sem erros de console ou hidratação", async ({ page }) => {
+  const errors = watchRuntimeErrors(page);
   await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "dark" });
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await page.waitForTimeout(250);
+  await expect(page.locator('[data-model-loaded="true"]')).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.locator(".hero-logo-model-fallback")).toHaveCount(0);
+
+  await configureCalculator(page);
+  const result = await revealCalculatorResult(page);
+  await result
+    .getByRole("button", { name: "Quero descobrir quanto posso economizar" })
+    .click();
+  const dialog = page.getByRole("dialog", { name: chatLabels.dialog });
+  await expect(dialog).toHaveAttribute("data-motion", "reduced");
+  const monthlyBill = await startChat(dialog);
+  await expect(monthlyBill).toHaveValue(currencyPattern(1_000));
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
   expect(errors).toEqual([]);
+});
+
+test("logo 3D gira por arraste do mouse e por teclado", async ({ page }) => {
+  await page.goto("/");
+  const canvas = page.locator(".hero-logo-model");
+  await expect(page.locator('[data-model-loaded="true"]')).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(canvas).toHaveAttribute("tabindex", "0");
+
+  const initialRotation = Number(await canvas.getAttribute("data-rotation-y"));
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  if (box) {
+    await page.mouse.move(box.x + box.width * 0.6, box.y + box.height * 0.5);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * 0.78, box.y + box.height * 0.5, {
+      steps: 5,
+    });
+    await page.mouse.up();
+  }
+
+  await expect
+    .poll(async () => Number(await canvas.getAttribute("data-rotation-y")))
+    .not.toBe(initialRotation);
+  await expect(canvas).toHaveAttribute("data-manipulating", "false");
+
+  await canvas.focus();
+  const draggedRotation = Number(await canvas.getAttribute("data-rotation-y"));
+  await page.keyboard.press("ArrowRight");
+  await expect
+    .poll(async () => Number(await canvas.getAttribute("data-rotation-y")))
+    .not.toBe(draggedRotation);
 });
 
 test("jornada essencial da landing page", async ({ page }) => {
@@ -26,11 +160,603 @@ test("jornada essencial da landing page", async ({ page }) => {
     .getByRole("link", { name: "FAQ" })
     .click();
   await expect(page).toHaveURL(/#faq/);
-  const faq = page.getByRole("button", { name: "O que a Energy oferece?" });
+  const faq = page.getByRole("button", {
+    name: "Vale a pena instalar energia solar?",
+  });
   await faq.click();
   await expect(faq).toHaveAttribute("aria-expanded", "false");
   await page.getByRole("button", { name: "Enviar solicitação" }).click();
   await expect(page.getByText("Informe seu nome.")).toBeVisible();
+});
+
+test("indicadores contam no hover e o mapa permanece acessível", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  const metrics = page.getByRole("region", { name: "Resultados da Energy" });
+  const values = metrics.locator(".solar-metric-value");
+  await expect(values).toHaveText(["7+", "35k", "98%"]);
+
+  const firstMetric = metrics.locator(".solar-metric").first();
+  await firstMetric.hover();
+  await expect(firstMetric).toHaveAttribute("data-counting", "true");
+  await expect(firstMetric).toHaveAttribute("data-counting", "false", {
+    timeout: 2_500,
+  });
+  await expect(firstMetric.locator(".solar-metric-value")).toHaveText("7+");
+
+  const map = page.getByTitle(
+    "Mapa da área de atendimento da Energy em Luziânia, Goiás",
+  );
+  await expect(map).toHaveAttribute("loading", "lazy");
+  await expect(map).toHaveAttribute("src", /google\.com\/maps/);
+});
+
+test("transições conectam todas as superfícies sem interferir na página", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  const expectedTransitions = [
+    "hero-calculator",
+    "calculator-problem",
+    "problem-solutions",
+    "solutions-benefits",
+    "benefits-company",
+    "company-process",
+    "process-differentiators",
+    "differentiators-metrics",
+    "metrics-faq",
+    "faq-cta",
+    "cta-contact",
+    "contact-footer",
+  ];
+  const expectedDepths = [
+    "continuous",
+    "soft",
+    "soft",
+    "soft",
+    "continuous",
+    "deep",
+    "deep",
+    "continuous",
+    "continuous",
+    "deep",
+    "deep",
+    "deep",
+  ];
+  const transitions = page.locator("[data-flow-transition]");
+
+  await expect(transitions).toHaveCount(expectedTransitions.length);
+  expect(
+    await transitions.evaluateAll((elements) =>
+      elements.map((element) => element.getAttribute("data-flow-transition")),
+    ),
+  ).toEqual(expectedTransitions);
+  expect(
+    await transitions.evaluateAll((elements) =>
+      elements.map((element) => element.getAttribute("data-flow-depth")),
+    ),
+  ).toEqual(expectedDepths);
+
+  const flowStructure = await page
+    .locator("main.home-flow")
+    .evaluate((main) => {
+      const nodes = Array.from(main.children).filter((element) =>
+        element.matches("section,[data-flow-transition]"),
+      );
+      return {
+        alternates: nodes.every((element, index) =>
+          index % 2 === 0
+            ? element.tagName === "SECTION"
+            : element.hasAttribute("data-flow-transition"),
+        ),
+        borders: nodes
+          .filter((element) => element.hasAttribute("data-flow-transition"))
+          .map((element) => {
+            const style = getComputedStyle(element);
+            return [style.borderTopWidth, style.borderBottomWidth];
+          }),
+        gaps: nodes.flatMap((element, index) => {
+          if (!element.hasAttribute("data-flow-transition")) return [];
+          const rect = element.getBoundingClientRect();
+          const previous = nodes[index - 1]?.getBoundingClientRect();
+          const next = nodes[index + 1]?.getBoundingClientRect();
+          return [
+            previous ? rect.top - previous.bottom : 0,
+            next ? next.top - rect.bottom : 0,
+          ];
+        }),
+        sectionCount: nodes.filter((element) => element.tagName === "SECTION")
+          .length,
+        transitionCount: nodes.filter((element) =>
+          element.hasAttribute("data-flow-transition"),
+        ).length,
+      };
+    });
+  expect(flowStructure.alternates).toBe(true);
+  expect(flowStructure.sectionCount).toBe(12);
+  expect(flowStructure.transitionCount).toBe(11);
+  expect(flowStructure.borders.flat()).toEqual(
+    Array.from({ length: 22 }, () => "0px"),
+  );
+  expect(Math.max(...flowStructure.gaps)).toBeLessThanOrEqual(1);
+  await expect(
+    page.locator(
+      'main.home-flow + [data-flow-transition="contact-footer"] + footer.footer',
+    ),
+  ).toHaveCount(1);
+
+  const presentation = await transitions.evaluateAll((elements) =>
+    elements.map((element) => {
+      const style = getComputedStyle(element);
+      const decorations = Array.from(
+        element.querySelectorAll<HTMLElement>("[data-flow-decoration]"),
+      );
+      const orangeTrace = element.querySelector<SVGPathElement>(
+        ".section-transition__trace--orange",
+      );
+      const blueTrace = element.querySelector<SVGPathElement>(
+        ".section-transition__trace--blue",
+      );
+      const solarField = element.querySelector<HTMLElement>(
+        '[data-flow-decoration="solar-field"]',
+      );
+      const lightBeam = element.querySelector<HTMLElement>(
+        '[data-flow-decoration="light-beam"]',
+      );
+      return {
+        ariaHidden: element.getAttribute("aria-hidden"),
+        animationName: style.animationName,
+        animations: element.getAnimations({ subtree: true }).length,
+        backgroundImage: style.backgroundImage,
+        blueStroke: blueTrace ? getComputedStyle(blueTrace).stroke : "",
+        decorationCount: decorations.length,
+        decorationNames: decorations.map((decoration) =>
+          decoration.getAttribute("data-flow-decoration"),
+        ),
+        decorationPointerEvents: decorations.map(
+          (decoration) => getComputedStyle(decoration).pointerEvents,
+        ),
+        focusableCount: element.querySelectorAll(
+          'a,button,input,select,textarea,iframe,[contenteditable="true"],[tabindex]:not([tabindex="-1"])',
+        ).length,
+        height: element.getBoundingClientRect().height,
+        isolation: style.isolation,
+        lightBeamBackground: lightBeam
+          ? getComputedStyle(lightBeam).backgroundImage
+          : "",
+        orangeStroke: orangeTrace ? getComputedStyle(orangeTrace).stroke : "",
+        overflow: style.overflow,
+        pointerEvents: style.pointerEvents,
+        pseudoPointerEvents: [
+          getComputedStyle(element, "::before").pointerEvents,
+          getComputedStyle(element, "::after").pointerEvents,
+        ],
+        solarFieldBackground: solarField
+          ? getComputedStyle(solarField).backgroundImage
+          : "",
+        solarFieldBackgroundSize: solarField
+          ? getComputedStyle(solarField).backgroundSize
+          : "",
+      };
+    }),
+  );
+
+  for (const transition of presentation) {
+    expect(transition.ariaHidden).toBe("true");
+    expect(transition.animationName).toBe("none");
+    expect(transition.animations).toBe(0);
+    expect(transition.backgroundImage).toContain("linear-gradient");
+    expect(transition.blueStroke).toMatch(/(?:23, 63, 109|57, 101, 143)/);
+    expect(transition.decorationCount).toBe(4);
+    expect(transition.decorationNames).toEqual([
+      "solar-field",
+      "light-beam",
+      "traces",
+      "node",
+    ]);
+    expect(transition.decorationPointerEvents).toEqual([
+      "none",
+      "none",
+      "none",
+      "none",
+    ]);
+    expect(transition.focusableCount).toBe(0);
+    expect(transition.height).toBeGreaterThan(0);
+    expect(transition.isolation).toBe("isolate");
+    expect(transition.lightBeamBackground).toContain("249, 95, 27");
+    expect(transition.lightBeamBackground).toMatch(
+      /(?:23, 63, 109|57, 101, 143)/,
+    );
+    expect(transition.orangeStroke).toContain("249, 95, 27");
+    expect(transition.overflow).toBe("hidden");
+    expect(transition.pointerEvents).toBe("none");
+    expect(transition.pseudoPointerEvents).toEqual(["none", "none"]);
+    expect(transition.solarFieldBackground).toContain("linear-gradient");
+    expect(transition.solarFieldBackground).toMatch(
+      /(?:23, 63, 109|57, 101, 143)/,
+    );
+    expect(transition.solarFieldBackgroundSize).not.toBe("auto");
+  }
+
+  await page.evaluate(() => {
+    document.documentElement.dataset.theme = "dark";
+  });
+  const darkPalette = await transitions.evaluateAll((elements) =>
+    elements.map((element) => ({
+      beam: getComputedStyle(
+        element.querySelector<HTMLElement>(
+          '[data-flow-decoration="light-beam"]',
+        )!,
+      ).backgroundImage,
+      blue: getComputedStyle(
+        element.querySelector<SVGPathElement>(
+          ".section-transition__trace--blue",
+        )!,
+      ).stroke,
+      field: getComputedStyle(
+        element.querySelector<HTMLElement>(
+          '[data-flow-decoration="solar-field"]',
+        )!,
+      ).backgroundImage,
+      orange: getComputedStyle(
+        element.querySelector<SVGPathElement>(
+          ".section-transition__trace--orange",
+        )!,
+      ).stroke,
+    })),
+  );
+  for (const color of darkPalette) {
+    expect(color.beam).toContain("249, 95, 27");
+    expect(color.beam).toContain("57, 101, 143");
+    expect(color.blue).toContain("57, 101, 143");
+    expect(color.field).toContain("57, 101, 143");
+    expect(color.orange).toContain("249, 95, 27");
+  }
+
+  await expectNoHorizontalOverflow(page);
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.goto("/");
+  await expectNoHorizontalOverflow(page);
+});
+
+test("calculadora é a segunda seção e está disponível na navegação", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const sectionIds = await page
+    .locator("main section")
+    .evaluateAll((sections) =>
+      sections.map((section) => section.id).filter(Boolean),
+    );
+  expect(sectionIds.slice(0, 3)).toEqual(["inicio", "calculadora", "solucao"]);
+
+  const navigation = page.getByRole("navigation", {
+    name: "Navegação principal",
+  });
+  const calculatorLink = navigation.getByRole("link", { name: "Calculadora" });
+  await expect(calculatorLink).toBeVisible();
+  await calculatorLink.click();
+  await expect(page).toHaveURL(/#calculadora$/);
+  await expect(
+    page.getByRole("heading", {
+      name: "Quanto dinheiro sua conta de luz ainda vai consumir?",
+    }),
+  ).toBeVisible();
+});
+
+test("calcula e revela a projeção sem reajuste em moeda brasileira", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const calculator = await configureCalculator(page, 1_000, 5);
+  await expect(
+    calculator.locator('[data-calculator-result="visible"]'),
+  ).toHaveCount(0);
+
+  const result = await revealCalculatorResult(page);
+  await expect(result.getByRole("heading", { level: 3 })).toContainText(
+    currencyPattern(60_000),
+  );
+  await expect(
+    result
+      .locator("dl > div")
+      .filter({ hasText: "Gasto aproximado em 12 meses" })
+      .locator("dd"),
+  ).toHaveText(currencyPattern(12_000));
+  await expect(
+    result
+      .locator("dl > div")
+      .filter({ hasText: "Gasto no período escolhido" })
+      .locator("dd"),
+  ).toHaveText(currencyPattern(60_000));
+  await expect(
+    result
+      .locator("dl > div")
+      .filter({ hasText: "Média aproximada por dia" })
+      .locator("dd"),
+  ).toHaveText(currencyPattern(32.88));
+  await expect(result).toContainText("Dinheiro pago à distribuidora");
+  await expect(result).toContainText(
+    "Possibilidade de investir na própria geração",
+  );
+});
+
+test("aplica reajuste composto e trata taxa zero sem divisão inválida", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const calculator = await configureCalculator(page, 1_000, 5);
+  await calculator.getByRole("button", { name: "Opções avançadas" }).click();
+  await calculator
+    .getByRole("checkbox", { name: "Considerar reajuste anual" })
+    .check();
+  const rate = calculator.getByRole("spinbutton", {
+    name: "Taxa de reajuste anual em porcentagem",
+  });
+  await rate.fill("10");
+
+  const result = await revealCalculatorResult(page);
+  const periodSpend = result
+    .locator("dl > div")
+    .filter({ hasText: "Gasto no período escolhido" })
+    .locator("dd");
+  await expect(periodSpend).toHaveText(currencyPattern(73_261.2));
+
+  await rate.fill("0");
+  await expect(periodSpend).toHaveText(currencyPattern(60_000));
+  await expect(result).not.toContainText(/NaN|Infinity/);
+});
+
+test("slider monetário permanece sincronizado e permite trocar o período", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const calculator = page.locator("#calculadora");
+  const slider = calculator.getByRole("slider", {
+    name: calculatorLabels.slider,
+  });
+  await slider.focus();
+  for (let step = 0; step < 20; step += 1) {
+    await slider.press("ArrowRight");
+  }
+  await expect(slider).toHaveAttribute(
+    "aria-valuetext",
+    currencyPattern(1_500),
+  );
+  await expect(calculator.getByLabel(calculatorLabels.monthlyBill)).toHaveValue(
+    currencyPattern(1_500),
+  );
+
+  const horizon = calculator.getByRole("button", { name: "25 anos" });
+  await horizon.click();
+  await expect(horizon).toHaveAttribute("aria-pressed", "true");
+  const result = await revealCalculatorResult(page);
+  await expect(
+    result
+      .locator("dl > div")
+      .filter({ hasText: "Gasto no período escolhido" })
+      .locator("dd"),
+  ).toHaveText(currencyPattern(450_000));
+});
+
+test("chat flutuante valida a conta, permite voltar e restaura o foco com Escape", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const { dialog, trigger } = await openFloatingChat(page);
+  await expect(dialog).toHaveAttribute("aria-modal", "true");
+  await expect
+    .poll(() =>
+      dialog.evaluate((element) => element.contains(document.activeElement)),
+    )
+    .toBe(true);
+
+  const monthlyBill = await startChat(dialog);
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+  await expect(
+    dialog.getByText("Informe um valor de conta maior que zero."),
+  ).toBeVisible();
+  await expect(monthlyBill).toHaveAttribute("aria-invalid", "true");
+
+  await monthlyBill.fill("800");
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+  await expect(
+    dialog.getByRole("button", { name: "Residência" }),
+  ).toBeVisible();
+  await dialog.getByRole("button", { name: "Voltar" }).click();
+  await expect(dialog.getByLabel("Valor médio da conta de luz")).toHaveValue(
+    currencyPattern(800),
+  );
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+});
+
+test("CTA do resultado abre o chat com valor e horizonte transferidos", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await configureCalculator(page, 1_000, 5);
+  const result = await revealCalculatorResult(page);
+  await result
+    .getByRole("button", { name: "Quero descobrir quanto posso economizar" })
+    .click();
+
+  const dialog = page.getByRole("dialog", { name: chatLabels.dialog });
+  const monthlyBill = await startChat(dialog);
+  await expect(
+    dialog.getByText(/Já trouxe o valor usado na sua simulação/),
+  ).toBeVisible();
+  await expect(monthlyBill).toHaveValue(currencyPattern(1_000));
+  await expect(
+    dialog.getByRole("progressbar", { name: "Progresso da conversa" }),
+  ).toHaveAttribute("aria-valuenow", /\d+/);
+});
+
+test("chat valida todas as etapas, corrige respostas e envia o payload esperado", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const payloads: Record<string, unknown>[] = [];
+  let submissionAttempt = 0;
+  await page.route("**/api/leads", async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.continue();
+      return;
+    }
+    payloads.push(route.request().postDataJSON() as Record<string, unknown>);
+    submissionAttempt += 1;
+    await route.fulfill({
+      status: submissionAttempt === 1 ? 502 : 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        message:
+          submissionAttempt === 1
+            ? "Falha simulada no canal de envio."
+            : "Lead de teste recebido com sucesso.",
+      }),
+    });
+  });
+
+  await page.goto("/");
+  const { dialog } = await openFloatingChat(page);
+  const monthlyBill = await startChat(dialog);
+
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+  await expect(
+    dialog.getByText("Informe um valor de conta maior que zero."),
+  ).toBeVisible();
+  await monthlyBill.fill("1000");
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+
+  await dialog.getByRole("button", { name: "Empresa" }).click();
+  const company = dialog.getByLabel("Nome da empresa");
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+  await expect(dialog.getByText("Informe o nome da empresa.")).toBeVisible();
+  await expect(company).toHaveAttribute("aria-invalid", "true");
+  await company.fill("Solar Teste Ltda");
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+
+  const city = dialog.getByLabel("Cidade");
+  const state = dialog.getByLabel("Estado");
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+  await expect(
+    dialog.getByText("Informe a cidade da instalação."),
+  ).toBeVisible();
+  await expect(
+    dialog.getByText("Informe o estado da instalação."),
+  ).toBeVisible();
+  await city.fill("Campinas");
+  await state.fill("SP");
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+
+  const name = dialog.getByLabel("Nome", { exact: true });
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+  await expect(
+    dialog.getByText("Informe como você gostaria de ser chamado."),
+  ).toBeVisible();
+  await name.fill("Ana Teste");
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+
+  const whatsapp = dialog.getByLabel("WhatsApp");
+  await whatsapp.fill("123");
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+  await expect(
+    dialog.getByText("Informe um WhatsApp válido com DDD."),
+  ).toBeVisible();
+  await whatsapp.fill("(19) 99999-9999");
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+
+  const email = dialog.getByLabel("E-mail");
+  await email.fill("email-invalido");
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+  await expect(dialog.getByText("Informe um e-mail válido.")).toBeVisible();
+  await email.fill("ana.teste@example.com");
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+
+  const summary = dialog.getByRole("heading", {
+    name: "Resumo das suas informações",
+  });
+  await expect(summary).toBeVisible();
+  await expect(dialog).toContainText(currencyPattern(120_000));
+  await dialog.getByRole("button", { name: "Corrigir resposta" }).click();
+  await expect(dialog.getByLabel("Valor médio da conta de luz")).toHaveValue(
+    currencyPattern(1_000),
+  );
+
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+  await dialog.getByRole("button", { name: "Empresa" }).click();
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+  await expect(summary).toBeVisible();
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+
+  const consent = dialog.getByRole("checkbox", { name: /Autorizo/ });
+  const privacyLink = dialog.getByRole("link", {
+    name: "Política de Privacidade",
+  });
+  await expect(privacyLink).toHaveAttribute("href", "/privacidade");
+  await dialog
+    .getByRole("button", { name: "Enviar para um especialista" })
+    .click();
+  await expect(
+    dialog.getByText(
+      "Você precisa autorizar o envio e o tratamento dos dados.",
+    ),
+  ).toBeVisible();
+  await consent.check();
+
+  const storageValues = await page.evaluate(() =>
+    Array.from({ length: localStorage.length }, (_, index) =>
+      localStorage.getItem(localStorage.key(index) ?? ""),
+    ).join(" "),
+  );
+  expect(storageValues).not.toContain("Ana Teste");
+  expect(storageValues).not.toContain("ana.teste@example.com");
+  expect(storageValues).not.toContain("99999-9999");
+
+  const submit = dialog.getByRole("button", {
+    name: "Enviar para um especialista",
+  });
+  await submit.click();
+  await expect(dialog.getByRole("alert")).toHaveText(
+    "Falha simulada no canal de envio.",
+  );
+  await expect(dialog.getByText(/Recebemos seus dados/)).toHaveCount(0);
+
+  await submit.click();
+  await expect(
+    dialog.getByText("Lead de teste recebido com sucesso."),
+  ).toBeVisible();
+  await expect.poll(() => payloads.length).toBe(2);
+  expect(payloads[0]).toEqual(
+    expect.objectContaining({
+      name: "Ana Teste",
+      company: "Solar Teste Ltda",
+      email: "ana.teste@example.com",
+      phone: "(19) 99999-9999",
+      customerType: "business",
+      monthlyBill: 1_000,
+      city: "Campinas",
+      state: "SP",
+      analysisHorizon: 10,
+      estimatedSpendWithoutSolar: 120_000,
+      consent: true,
+      origin: "conversational-chat",
+      website: "",
+      message: expect.any(String),
+    }),
+  );
 });
 
 test("menu mobile abre e fecha após navegação", async ({ page }) => {
@@ -55,6 +781,21 @@ test("menu mobile abre e fecha após navegação", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: "Abrir menu" }),
   ).toHaveAttribute("aria-expanded", "false");
+});
+
+test("menu mobile permanece utilizável com movimento reduzido", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  const menu = page.getByRole("button", { name: "Abrir menu" });
+  await menu.click();
+  await expect(
+    page
+      .getByRole("navigation", { name: "Menu mobile" })
+      .getByRole("link", { name: "FAQ" }),
+  ).toBeVisible();
 });
 
 test("alterna o tema e preserva a escolha após recarregar", async ({
@@ -84,12 +825,32 @@ test("prefers-reduced-motion remove parallax, stagger e movimento contínuo", as
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
+  await expect(page.locator('[data-model-loaded="true"]')).toBeVisible({
+    timeout: 15_000,
+  });
 
   const reveal = page.locator("[data-motion-reveal]").first();
   await expect(reveal).toBeVisible();
   await expect(reveal).toHaveCSS("opacity", "1");
 
-  const symbol = page.locator(".hero-logo-ghost");
+  const symbol = page.locator(".hero-logo-model-motion");
+  await expect(symbol).toBeVisible();
+  await expect(page.locator(".hero-logo-model")).toHaveAttribute(
+    "data-motion",
+    "paused",
+  );
+  await expect(page.locator(".hero-logo-model-shell")).toHaveAttribute(
+    "data-interactive",
+    "false",
+  );
+  await expect(page.locator(".hero")).toHaveAttribute(
+    "data-cursor-motion",
+    "disabled",
+  );
+  await expect(page.locator(".magnetic-button").first()).toHaveAttribute(
+    "data-magnetic-enabled",
+    "false",
+  );
   const before = await symbol.evaluate(
     (element) => getComputedStyle(element).transform,
   );
@@ -100,11 +861,65 @@ test("prefers-reduced-motion remove parallax, stagger e movimento contínuo", as
   );
   expect(after).toBe(before);
 
-  const faq = page.getByRole("button", { name: "Como começa o atendimento?" });
+  const faq = page.getByRole("button", {
+    name: "Vocês atendem minha cidade?",
+  });
   await faq.click();
   await expect(faq).toHaveAttribute("aria-expanded", "true");
   await expect(
-    page.getByRole("region", { name: "Como começa o atendimento?" }),
+    page.getByRole("region", { name: "Vocês atendem minha cidade?" }),
+  ).toBeVisible();
+
+  await configureCalculator(page, 1_000, 5);
+  const calculatorResult = await revealCalculatorResult(page);
+  await expect(calculatorResult).toHaveCSS("opacity", "1");
+  await calculatorResult
+    .getByRole("button", { name: "Quero descobrir quanto posso economizar" })
+    .click();
+  const dialog = page.getByRole("dialog", { name: chatLabels.dialog });
+  await expect(dialog).toHaveAttribute("data-motion", "reduced");
+  await startChat(dialog);
+  await page.keyboard.press("Escape");
+});
+
+test("carrossel responde a teclado, controles e arraste", async ({ page }) => {
+  await page.goto("/");
+  const carousel = page.getByRole("region", { name: "Conheça a Energy" });
+  await carousel.scrollIntoViewIfNeeded();
+  await carousel.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(
+    carousel.getByRole("heading", {
+      name: "Cada projeto começa com contexto.",
+    }),
+  ).toBeVisible();
+
+  await carousel.getByRole("button", { name: "Imagem anterior" }).click();
+  await expect(
+    carousel.getByRole("heading", { name: "Estrutura real. Contato humano." }),
+  ).toBeVisible();
+  await expect(
+    carousel.getByRole("img", {
+      name: "Equipe Energy na recepção da empresa",
+    }),
+  ).toBeVisible();
+
+  const slide = carousel.locator(".carousel-image-slide");
+  await slide.scrollIntoViewIfNeeded();
+  const box = await slide.boundingBox();
+  expect(box).not.toBeNull();
+  if (box) {
+    await page.mouse.move(box.x + box.width * 0.72, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * 0.25, box.y + box.height / 2, {
+      steps: 6,
+    });
+    await page.mouse.up();
+  }
+  await expect(
+    carousel.getByRole("heading", {
+      name: "Cada projeto começa com contexto.",
+    }),
   ).toBeVisible();
 });
 
@@ -125,8 +940,39 @@ test("conteúdo essencial e navegação permanecem acessíveis sem JavaScript", 
     }),
   ).toBeVisible();
   await expect(
-    page.getByText("Os dados são enviados apenas ao endpoint configurado"),
+    page.getByText("O sistema se paga em poucos anos"),
   ).toBeVisible();
+
+  const transitions = page.locator("[data-flow-transition]");
+  await expect(transitions).toHaveCount(12);
+  await expect(page.locator("[data-flow-decoration]")).toHaveCount(48);
+  const transitionFallback = await transitions.evaluateAll((elements) =>
+    elements.map((element) => {
+      const style = getComputedStyle(element);
+      return {
+        background: style.backgroundImage,
+        decorationPointerEvents: Array.from(
+          element.querySelectorAll<HTMLElement>("[data-flow-decoration]"),
+        ).map((decoration) => getComputedStyle(decoration).pointerEvents),
+        height: element.getBoundingClientRect().height,
+        overflow: style.overflow,
+        pointerEvents: style.pointerEvents,
+      };
+    }),
+  );
+  for (const transition of transitionFallback) {
+    expect(transition.background).toContain("linear-gradient");
+    expect(transition.decorationPointerEvents).toEqual([
+      "none",
+      "none",
+      "none",
+      "none",
+    ]);
+    expect(transition.height).toBeGreaterThan(0);
+    expect(transition.overflow).toBe("hidden");
+    expect(transition.pointerEvents).toBe("none");
+  }
+  await expectNoHorizontalOverflow(page);
 
   await context.close();
 });
@@ -163,6 +1009,45 @@ test("API de leads rejeita formato e payload acima do limite", async ({
   expect(oversized.status()).toBe(413);
 });
 
+test("API aceita o payload conversacional, preserva o honeypot e não simula sucesso sem canal", async ({
+  request,
+}) => {
+  const conversationalPayload = {
+    name: "Ana Teste",
+    company: "Solar Teste Ltda",
+    email: "ana.teste@example.com",
+    phone: "(19) 99999-9999",
+    message: "Simulação automatizada para validação do fluxo conversacional.",
+    consent: true,
+    website: "",
+    origin: "conversational-chat",
+    customerType: "business",
+    monthlyBill: 1_000,
+    city: "Campinas",
+    state: "SP",
+    analysisHorizon: 5,
+    estimatedSpendWithoutSolar: 60_000,
+  };
+
+  const withoutChannel = await request.post("/api/leads", {
+    data: conversationalPayload,
+  });
+  expect(withoutChannel.status()).toBe(503);
+  await expect(withoutChannel.json()).resolves.toMatchObject({
+    message: expect.stringContaining(
+      "canal de envio ainda não está configurado",
+    ),
+  });
+
+  const honeypot = await request.post("/api/leads", {
+    data: { ...conversationalPayload, website: "https://spam.example" },
+  });
+  expect(honeypot.status()).toBe(200);
+  await expect(honeypot.json()).resolves.toEqual({
+    message: "Solicitação recebida.",
+  });
+});
+
 test("BLOG aparece após FAQ e abre a página pública", async ({ page }) => {
   await page.goto("/");
   const navigation = page.getByRole("navigation", {
@@ -188,15 +1073,22 @@ test("painel do blog exige autenticação", async ({ page }) => {
   ).toBeVisible();
 });
 
-for (const width of [320, 360, 768, 1024, 1440]) {
+for (const width of [320, 360, 390, 768, 1024, 1440]) {
   test(`não apresenta overflow horizontal em ${width}px`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
-    const hasOverflow = await page.evaluate(
-      () =>
-        document.documentElement.scrollWidth >
-        document.documentElement.clientWidth,
-    );
-    expect(hasOverflow).toBe(false);
+    await expectNoHorizontalOverflow(page);
+
+    await configureCalculator(page, 1_000, 25);
+    const result = await revealCalculatorResult(page);
+    await expectNoHorizontalOverflow(page);
+    await result
+      .getByRole("button", { name: "Quero descobrir quanto posso economizar" })
+      .click();
+    await expect(
+      page.getByRole("dialog", { name: chatLabels.dialog }),
+    ).toBeVisible();
+    await expectNoHorizontalOverflow(page);
   });
 }

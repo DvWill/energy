@@ -2,6 +2,9 @@
 
 import { Moon, Sun } from "lucide-react";
 import { useSyncExternalStore } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { useAccessibleMotion } from "@/hooks/use-accessible-motion";
+import { microTransition } from "@/lib/motion";
 
 type Theme = "light" | "dark";
 
@@ -53,6 +56,7 @@ function subscribe(callback: () => void) {
 
 export function ThemeToggle() {
   const theme = useSyncExternalStore(subscribe, getTheme, () => "light");
+  const reduced = useAccessibleMotion();
 
   const toggleTheme = () => {
     const nextTheme: Theme = getTheme() === "dark" ? "light" : "dark";
@@ -74,8 +78,24 @@ export function ThemeToggle() {
       title={label}
       onClick={toggleTheme}
     >
-      <Moon className="theme-icon theme-icon-moon" aria-hidden="true" />
-      <Sun className="theme-icon theme-icon-sun" aria-hidden="true" />
+      <AnimatePresence initial={false} mode="wait">
+        <motion.span
+          className="theme-icon-wrap"
+          key={theme}
+          initial={reduced ? false : { opacity: 0, rotate: -22, scale: 0.72 }}
+          animate={{ opacity: 1, rotate: 0, scale: 1 }}
+          exit={
+            reduced ? undefined : { opacity: 0, rotate: 22, scale: 0.72 }
+          }
+          transition={reduced ? { duration: 0 } : microTransition}
+        >
+          {theme === "dark" ? (
+            <Sun className="theme-icon" aria-hidden="true" />
+          ) : (
+            <Moon className="theme-icon" aria-hidden="true" />
+          )}
+        </motion.span>
+      </AnimatePresence>
     </button>
   );
 }

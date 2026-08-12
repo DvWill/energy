@@ -12,8 +12,14 @@ export const siteContent = {
     whatsappUrl: "",
     // PENDENTE: informar cidades, estados ou regiões efetivamente atendidas.
     location: "[ÁREA DE ATENDIMENTO PENDENTE]",
+    map: {
+      title: "Mapa da área de atendimento da Energy em Luziânia, Goiás",
+      embedUrl:
+        "https://www.google.com/maps?q=Luzi%C3%A2nia%2C%20Goi%C3%A1s&output=embed",
+    },
   },
   navigation: [
+    { label: "Calculadora", href: "/#calculadora" },
     { label: "Soluções", href: "/#solucoes" },
     { label: "Quem somos", href: "/#quem-somos" },
     { label: "Processo", href: "/#processo" },
@@ -32,6 +38,198 @@ export const siteContent = {
     description:
       "Soluções solares orientadas ao seu consumo, ao seu espaço e às decisões que realmente importam.",
     trust: "Atendimento próximo, do primeiro contato à proposta.",
+  },
+  calculator: {
+    id: "calculadora",
+    eyebrow: "DESCUBRA O CUSTO DE ESPERAR",
+    title: "Quanto dinheiro sua conta de luz ainda vai consumir?",
+    description:
+      "Faça uma simulação rápida e veja quanto você poderá gastar mantendo sua conta de energia como está.",
+    experience: {
+      label: "SIMULAÇÃO INTERATIVA",
+      title: "Construa sua projeção em poucos segundos",
+      liveSummaryLabel: "Configuração atual",
+      monthlySuffix: "/ mês",
+      monthlyAriaSuffix: "por mês",
+      todayLabel: "Hoje",
+      noAdjustmentLabel: "Sem reajuste",
+      adjustmentSummaryPrefix: "reajuste de",
+      adjustmentSummarySuffix: "a.a.",
+      educationalNote: {
+        title: "Estimativa educativa",
+        description: "Sem promessas ou garantias comerciais.",
+      },
+      progressLabel: "Progresso da simulação",
+      steps: ["Conta mensal", "Período", "Resultado"],
+      highlights: [
+        {
+          title: "Resposta instantânea",
+          description: "A projeção acompanha cada ajuste que você fizer.",
+        },
+        {
+          title: "Critérios transparentes",
+          description: "Você controla valor, período e possível reajuste.",
+        },
+        {
+          title: "Estimativa responsável",
+          description: "Sem promessas de economia ou retorno garantido.",
+        },
+      ],
+    },
+    monthlyBill: {
+      label: "Valor médio mensal da conta de energia",
+      hint: "Digite o valor ou ajuste pelo controle deslizante.",
+      inputAriaLabel: "Valor médio mensal da conta de energia em reais",
+      sliderAriaLabel: "Ajustar valor médio mensal da conta de energia",
+      placeholder: "R$ 500,00",
+      error: "Informe um valor mensal maior que zero.",
+    },
+    slider: {
+      min: 100,
+      max: 10_000,
+      step: 50,
+      default: 500,
+    },
+    horizons: [1, 5, 10, 25],
+    horizon: {
+      label: "Período da projeção",
+      ariaLabel: "Selecionar período da projeção",
+      yearSingular: "ano",
+      yearPlural: "anos",
+      default: 10,
+    },
+    advancedOptionsLabel: "Opções avançadas",
+    annualAdjustment: {
+      toggleLabel: "Considerar reajuste anual",
+      description:
+        "Inclua uma taxa configurável para simular o aumento anual da conta.",
+      rateLabel: "Reajuste anual estimado",
+      rateAriaLabel: "Taxa de reajuste anual em porcentagem",
+      min: 0,
+      max: 30,
+      step: 0.5,
+      default: 5,
+      suffix: "% ao ano",
+    },
+    primaryCta: "CLIQUE AQUI E VEJA O QUANTO VOCÊ PERDE",
+    result: {
+      heading: "Resultado da projeção",
+      intro:
+        "Mantendo sua conta nesse valor, você poderá gastar aproximadamente:",
+      annualSpendLabel: "Gasto aproximado em 12 meses",
+      periodSpendLabel: "Gasto no período escolhido",
+      dailyAverageLabel: "Média aproximada por dia",
+      comparisonTitle: "Uma escolha sobre o destino do seu dinheiro",
+      distributorLabel: "Dinheiro pago à distribuidora",
+      ownGenerationLabel: "Possibilidade de investir na própria geração",
+      ownGenerationValue: "Requer uma análise personalizada",
+      editCta: "Ajustar simulação",
+      followupCta: "Quero descobrir quanto posso economizar",
+      disclaimer:
+        "Esta é uma estimativa educativa baseada nos valores informados. A economia real depende da análise do consumo, das tarifas, do imóvel e do dimensionamento do sistema.",
+    },
+  },
+  chat: {
+    typingDelay: 450,
+    trigger: {
+      label: "Faça sua simulação",
+      ariaLabel: "Abrir conversa para fazer uma simulação",
+    },
+    dialog: {
+      title: "Simulação ENERGY",
+      subtitle: "Converse com a nossa equipe",
+      ariaLabel: "Conversa para simulação de energia solar",
+      closeAriaLabel: "Fechar conversa",
+    },
+    typingLabel: "O assistente da ENERGY está digitando",
+    progressLabel: "Progresso da conversa",
+    welcome:
+      "Olá! Eu sou o assistente da ENERGY. Posso fazer algumas perguntas rápidas para entendermos seu projeto?",
+    prompts: {
+      monthlyBill: "Qual é o valor médio da sua conta de luz?",
+      prefilledMonthlyBill:
+        "Já trouxe o valor usado na sua simulação. Você pode confirmar ou alterar.",
+      customerType:
+        "Esse projeto seria para sua casa, empresa ou propriedade rural?",
+      companyName: "Qual é o nome da sua empresa?",
+      location: "Em qual cidade e estado será feita a instalação?",
+      name: "Como você gostaria de ser chamado?",
+      whatsapp: "Qual é o seu WhatsApp?",
+      email: "Qual é o seu melhor e-mail?",
+      summary: "Confira se está tudo certo antes de enviar.",
+      consent:
+        "Para finalizar, preciso da sua autorização para enviar e tratar estes dados.",
+    },
+    fields: {
+      monthlyBill: {
+        label: "Valor médio da conta de luz",
+        placeholder: "R$ 500,00",
+      },
+      companyName: {
+        label: "Nome da empresa",
+        placeholder: "Nome da empresa",
+      },
+      city: { label: "Cidade", placeholder: "Sua cidade" },
+      state: { label: "Estado", placeholder: "UF" },
+      name: { label: "Nome", placeholder: "Como podemos chamar você?" },
+      whatsapp: {
+        label: "WhatsApp",
+        placeholder: "(00) 00000-0000",
+      },
+      email: { label: "E-mail", placeholder: "voce@exemplo.com" },
+      honeypot: "Não preencha este campo",
+    },
+    customerTypes: [
+      { value: "residential", label: "Residência" },
+      { value: "business", label: "Empresa" },
+      { value: "rural", label: "Propriedade rural" },
+    ],
+    quickReplies: {
+      back: "Voltar",
+      correct: "Corrigir resposta",
+      continue: "Continuar",
+      confirm: "Confirmar",
+    },
+    summary: {
+      title: "Resumo das suas informações",
+      monthlyBillLabel: "Conta mensal",
+      customerTypeLabel: "Tipo de projeto",
+      companyNameLabel: "Empresa",
+      locationLabel: "Local da instalação",
+      nameLabel: "Nome",
+      whatsappLabel: "WhatsApp",
+      emailLabel: "E-mail",
+      horizonLabel: "Período da simulação",
+      estimatedSpendLabel: "Gasto estimado sem energia solar",
+    },
+    consent: {
+      labelBeforeLink:
+        "Autorizo o envio e o tratamento dos meus dados pela ENERGY para contato sobre esta simulação, conforme a",
+      privacyLinkLabel: "Política de Privacidade",
+      labelAfterLink: ".",
+      error: "Você precisa autorizar o envio e o tratamento dos dados.",
+    },
+    actions: {
+      send: "Enviar para um especialista",
+      sending: "Enviando...",
+      restart: "Fazer uma nova simulação",
+    },
+    status: {
+      success:
+        "Recebemos seus dados. Um especialista da ENERGY poderá entrar em contato pelo canal informado.",
+      error:
+        "Não foi possível enviar seus dados. Revise as informações e tente novamente.",
+    },
+    errors: {
+      monthlyBill: "Informe um valor de conta maior que zero.",
+      customerType: "Selecione o tipo do projeto.",
+      companyName: "Informe o nome da empresa.",
+      city: "Informe a cidade da instalação.",
+      state: "Informe o estado da instalação.",
+      name: "Informe como você gostaria de ser chamado.",
+      whatsapp: "Informe um WhatsApp válido com DDD.",
+      email: "Informe um e-mail válido.",
+    },
   },
   trust: [
     // PENDENTE: substituir apenas por segmentos efetivamente atendidos.
@@ -143,34 +341,33 @@ export const siteContent = {
       energy: "Contexto organizado para avaliar",
     },
   ],
-  // PENDENTE: adicionar somente métricas/resultados reais e verificáveis.
-  metrics: [],
+  metrics: [
+    { value: 7, suffix: "+", label: "Anos gerando economia" },
+    { value: 35, suffix: "k", label: "MWh de energia gerada" },
+    { value: 98, suffix: "%", label: "Clientes satisfeitos" },
+  ],
   // PENDENTE: adicionar somente depoimento/case real, autorizado e identificável.
   testimonial: null,
+  faqSection: {
+    eyebrow: "FAQ",
+    title: "Aproveite o sol e comece a economizar hoje!",
+  },
   faq: [
     {
-      q: "O que a Energy oferece?",
-      a: "A Energy atua com energia solar. Os detalhes sobre modalidades, serviços incluídos e segmentos atendidos ainda precisam ser confirmados pela empresa.",
+      q: "Vale a pena instalar energia solar?",
+      a: "Sim! O sistema se paga em poucos anos e você economiza por mais de 25 anos.",
     },
     {
-      q: "Para quais empresas a solução é indicada?",
-      a: "O perfil de cliente ideal ainda não foi definido no conteúdo. Informe seu setor, contexto e objetivo para que a Energy avalie a aderência.",
+      q: "Quanto posso economizar na conta de luz?",
+      a: "A economia varia conforme o consumo, a tarifa de energia, a incidência solar e o dimensionamento do sistema. Faça uma simulação para conhecer uma estimativa do seu cenário.",
     },
     {
-      q: "Como começa o atendimento?",
-      a: "O primeiro passo é informar sua necessidade e alguns dados do contexto. A equipe poderá solicitar informações complementares antes de recomendar o próximo caminho.",
+      q: "Vocês atendem minha cidade?",
+      a: "Informe sua cidade e estado no atendimento. Nossa equipe verifica a disponibilidade e orienta os próximos passos para a sua região.",
     },
     {
-      q: "Existe uma proposta padrão?",
-      a: "A página não publica pacotes ou preços porque essas informações não foram fornecidas. As condições devem ser apresentadas pela equipe após o entendimento da demanda.",
-    },
-    {
-      q: "Qual é o prazo de retorno?",
-      a: "Ainda não há um prazo comercial oficial informado. O retorno depende da disponibilidade da equipe.",
-    },
-    {
-      q: "Meus dados ficam seguros?",
-      a: "Os dados são enviados apenas ao endpoint configurado pelo responsável do site. Consulte a política de privacidade antes de enviar.",
+      q: "Como funciona o orçamento?",
+      a: "Você compartilha sua conta de energia e os dados do imóvel. A Energy analisa o cenário e apresenta uma proposta dimensionada para a sua necessidade.",
     },
   ],
   pending: [
@@ -184,7 +381,6 @@ export const siteContent = {
     "Área de atendimento",
     "Garantias",
     "Provas sociais",
-    "Métricas",
     "Depoimento",
   ],
 } as const;

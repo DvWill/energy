@@ -3,21 +3,68 @@ import { leadSchema } from "@/lib/validations";
 
 const MAX_BODY_BYTES = 32_000;
 
+type BodyReadResult = { tooLarge: true } | { tooLarge: false; text: string };
+
+async function readBodyWithinLimit(request: Request): Promise<BodyReadResult> {
+  if (!request.body) return { tooLarge: false, text: "" };
+
+  const reader = request.body.getReader();
+  const decoder = new TextDecoder();
+  let bytesRead = 0;
+  let text = "";
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      bytesRead += value.byteLength;
+      if (bytesRead > MAX_BODY_BYTES) {
+        await reader.cancel().catch(() => undefined);
+        return { tooLarge: true };
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+    text += decoder.decode();
+    return { tooLarge: false, text };
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+function payloadTooLargeResponse() {
+  return NextResponse.json(
+    { message: "A solicitação excede o tamanho permitido." },
+    { status: 413 },
+  );
+}
+
 export async function POST(request: Request) {
-  if (!request.headers.get("content-type")?.includes("application/json"))
+  if (
+    !request.headers
+      .get("content-type")
+      ?.toLowerCase()
+      .includes("application/json")
+  )
     return NextResponse.json(
       { message: "Envie os dados no formato JSON." },
       { status: 415 },
     );
   const contentLength = Number(request.headers.get("content-length") ?? 0);
   if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES)
-    return NextResponse.json(
-      { message: "A solicitação excede o tamanho permitido." },
-      { status: 413 },
-    );
+    return payloadTooLargeResponse();
+
+  let bodyResult: BodyReadResult;
+  try {
+    bodyResult = await readBodyWithinLimit(request);
+  } catch {
+    return NextResponse.json({ message: "Dados inválidos." }, { status: 400 });
+  }
+  if (bodyResult.tooLarge) return payloadTooLargeResponse();
+
   let body: unknown;
   try {
-    body = await request.json();
+    body = JSON.parse(bodyResult.text);
   } catch {
     return NextResponse.json({ message: "Dados inválidos." }, { status: 400 });
   }
@@ -30,8 +77,8 @@ export async function POST(request: Request) {
       },
       { status: 422 },
     );
-  if (parsed.data.website)
-    return NextResponse.json({ message: "Solicitação recebida." });
+  const { website, ...lead } = parsed.data;
+  if (website) return NextResponse.json({ message: "Solicitação recebida." });
   const webhook = process.env.LEAD_WEBHOOK_URL;
   if (!webhook)
     return NextResponse.json(
@@ -61,8 +108,8 @@ export async function POST(request: Request) {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        ...parsed.data,
-        website: undefined,
+        ...lead,
+        origin: lead.origin ?? "contact-form",
         source: "landing-page",
         submittedAt: new Date().toISOString(),
       }),

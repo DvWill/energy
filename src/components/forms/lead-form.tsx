@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LoaderCircle, Send } from "lucide-react";
+import { CircleAlert, CircleCheck, LoaderCircle, Send } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { leadSchema, type LeadInput } from "@/lib/validations";
 import { elementTransition, microTransition } from "@/lib/motion";
@@ -14,6 +14,35 @@ const fields = [
   { name: "email", label: "E-mail", type: "email", auto: "email" },
   { name: "phone", label: "WhatsApp", type: "tel", auto: "tel" },
 ] as const;
+
+function FieldError({
+  id,
+  message,
+  reduced,
+}: {
+  id: string;
+  message?: string;
+  reduced: boolean;
+}) {
+  return (
+    <span id={id} className="error" aria-live="polite">
+      <AnimatePresence initial={false} mode="wait">
+        {message && (
+          <motion.span
+            key={message}
+            initial={reduced ? false : { opacity: 0, y: -3 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduced ? undefined : { opacity: 0, y: -2 }}
+            transition={reduced ? { duration: 0 } : microTransition}
+          >
+            {message}
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </span>
+  );
+}
+
 export function LeadForm() {
   const [status, setStatus] = useState<{
     kind: "success" | "error";
@@ -27,11 +56,16 @@ export function LeadForm() {
     reset,
   } = useForm<LeadInput>({
     resolver: zodResolver(leadSchema),
-    defaultValues: { consent: false, website: "" },
+    defaultValues: {
+      consent: false,
+      origin: "contact-form",
+      website: "",
+    },
   });
   const submit = handleSubmit(async (data) => {
     setStatus(null);
-    const endpoint = process.env.NEXT_PUBLIC_LEAD_FORM_URL ?? "/api/leads";
+    const endpoint =
+      process.env.NEXT_PUBLIC_LEAD_FORM_URL?.trim() || "/api/leads";
     if (
       process.env.NEXT_PUBLIC_STATIC_HOST === "true" &&
       !process.env.NEXT_PUBLIC_LEAD_FORM_URL
@@ -78,7 +112,11 @@ export function LeadForm() {
   return (
     <motion.form onSubmit={submit} noValidate aria-busy={isSubmitting}>
       {fields.map((f) => (
-        <div className="field" key={f.name}>
+        <div
+          className="field"
+          data-invalid={errors[f.name] ? "true" : "false"}
+          key={f.name}
+        >
           <label htmlFor={f.name}>{f.label}</label>
           <input
             id={f.name}
@@ -88,12 +126,17 @@ export function LeadForm() {
             aria-describedby={`${f.name}-error`}
             {...register(f.name)}
           />
-          <span id={`${f.name}-error`} className="error">
-            {errors[f.name]?.message}
-          </span>
+          <FieldError
+            id={`${f.name}-error`}
+            message={errors[f.name]?.message}
+            reduced={reduced}
+          />
         </div>
       ))}
-      <div className="field full">
+      <div
+        className="field full"
+        data-invalid={errors.message ? "true" : "false"}
+      >
         <label htmlFor="message">Como podemos ajudar?</label>
         <textarea
           id="message"
@@ -102,9 +145,11 @@ export function LeadForm() {
           aria-describedby="message-error"
           {...register("message")}
         />
-        <span id="message-error" className="error">
-          {errors.message?.message}
-        </span>
+        <FieldError
+          id="message-error"
+          message={errors.message?.message}
+          reduced={reduced}
+        />
       </div>
       <div className="honeypot" aria-hidden="true">
         <label htmlFor="website">Site</label>
@@ -127,9 +172,11 @@ export function LeadForm() {
           Li e concordo com a{" "}
           <Link href="/privacidade">política de privacidade</Link>.
         </label>
-        <span id="consent-error" className="error">
-          {errors.consent?.message}
-        </span>
+        <FieldError
+          id="consent-error"
+          message={errors.consent?.message}
+          reduced={reduced}
+        />
       </div>
       <motion.button
         className="button full"
@@ -161,6 +208,8 @@ export function LeadForm() {
       <motion.div
         className={`form-status ${visibleStatus?.kind ?? ""}`}
         data-motion-form-status=""
+        data-state={visibleStatus?.kind ?? "idle"}
+        role={visibleStatus?.kind === "error" ? "alert" : "status"}
         aria-live="polite"
         aria-atomic="true"
         animate={{
@@ -178,6 +227,15 @@ export function LeadForm() {
               exit={reduced ? undefined : { opacity: 0, y: -5 }}
               transition={reduced ? { duration: 0 } : microTransition}
             >
+              {visibleStatus.kind === "success" && (
+                <CircleCheck aria-hidden="true" />
+              )}
+              {visibleStatus.kind === "error" && (
+                <CircleAlert aria-hidden="true" />
+              )}
+              {visibleStatus.kind === "loading" && (
+                <LoaderCircle className="spin" aria-hidden="true" />
+              )}
               {visibleStatus.message}
             </motion.p>
           )}

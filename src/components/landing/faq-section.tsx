@@ -1,6 +1,6 @@
 "use client";
 import { useState, useSyncExternalStore } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, CircleHelp } from "lucide-react";
 import { motion } from "motion/react";
 import { siteContent as c } from "@/content/landing-page";
 import { Container } from "@/components/ui/container";
@@ -9,10 +9,7 @@ import {
   accordionVariants,
   instantAccordionVariants,
   microTransition,
-  revealVariants,
-  staggerContainerVariants,
-  staggerItemVariants,
-  viewportOnce,
+  springTransition,
 } from "@/lib/motion";
 
 const subscribeToHydration = () => () => {};
@@ -26,76 +23,87 @@ export function FaqSection() {
   );
   const reduced = useAccessibleMotion();
   return (
-    <section id="faq" className="section">
-      <Container>
-        <motion.div
-          className="section-heading"
-          data-motion-reveal=""
-          initial={reduced ? false : "hidden"}
-          whileInView="visible"
-          viewport={viewportOnce}
-          variants={revealVariants}
-        >
-          <span>PERGUNTAS FREQUENTES</span>
-          <h2>Antes de iniciar a conversa.</h2>
-        </motion.div>
-        <motion.div
-          className="faq"
-          data-motion-reveal=""
-          initial={reduced ? false : "hidden"}
-          whileInView="visible"
-          viewport={viewportOnce}
-          variants={reduced ? undefined : staggerContainerVariants}
-        >
-          {c.faq.map((item, i) => {
-            const open = active === i;
-            return (
-              <motion.div
-                className="faq-item"
-                data-motion-reveal=""
-                key={item.q}
-                variants={reduced ? undefined : staggerItemVariants}
-              >
-                <h3>
-                  <motion.button
-                    id={`faq-button-${i}`}
-                    aria-expanded={open}
-                    aria-controls={`faq-${i}`}
-                    onClick={() => setActive(open ? null : i)}
-                    whileHover={reduced ? undefined : { x: 3 }}
-                    transition={microTransition}
-                  >
-                    {item.q}
-                    <motion.span
-                      className="faq-icon"
-                      animate={{ rotate: open ? 180 : 0 }}
-                      transition={reduced ? { duration: 0 } : microTransition}
-                    >
-                      <ChevronDown aria-hidden="true" />
-                    </motion.span>
-                  </motion.button>
-                </h3>
-                <motion.div
-                  id={`faq-${i}`}
-                  className="faq-answer"
-                  data-motion-accordion=""
-                  role="region"
-                  aria-labelledby={`faq-button-${i}`}
-                  aria-hidden={hydrated ? !open : undefined}
-                  initial={false}
-                  animate={open ? "open" : "collapsed"}
-                  variants={
-                    reduced ? instantAccordionVariants : accordionVariants
-                  }
+    <section
+      id="faq"
+      className="section faq-location-section"
+      aria-labelledby="faq-title"
+    >
+      <Container className="faq-location-grid">
+        <div className="faq-location-copy">
+          <div className="faq-location-heading motion-heading">
+            <span className="faq-location-badge">
+              <CircleHelp aria-hidden="true" />
+              <span>{c.faqSection.eyebrow}</span>
+              <strong aria-hidden="true">+</strong>
+            </span>
+            <h2 id="faq-title">{c.faqSection.title}</h2>
+            <span className="line-reveal" aria-hidden="true" />
+          </div>
+          <div className="faq faq-location-list">
+            {c.faq.map((item, i) => {
+              const open = active === i;
+              return (
+                <div
+                  className="faq-item"
+                  data-state={open ? "open" : "closed"}
+                  key={item.q}
                 >
-                  <div className="faq-answer-inner">
-                    <p>{item.a}</p>
-                  </div>
-                </motion.div>
-              </motion.div>
-            );
-          })}
-        </motion.div>
+                  <h3>
+                    <motion.button
+                      id={`faq-button-${i}`}
+                      aria-expanded={open}
+                      aria-controls={`faq-${i}`}
+                      onClick={() => setActive(open ? null : i)}
+                      whileHover={reduced ? undefined : { x: 3 }}
+                      transition={microTransition}
+                    >
+                      {item.q}
+                      <motion.span
+                        className="faq-icon"
+                        animate={{
+                          rotate: open ? 180 : 0,
+                          scale: open ? 1.04 : 1,
+                        }}
+                        transition={
+                          reduced ? { duration: 0 } : springTransition
+                        }
+                      >
+                        <ChevronDown aria-hidden="true" />
+                      </motion.span>
+                    </motion.button>
+                  </h3>
+                  <motion.div
+                    id={`faq-${i}`}
+                    className="faq-answer"
+                    data-motion-accordion=""
+                    role="region"
+                    aria-labelledby={`faq-button-${i}`}
+                    aria-hidden={hydrated ? !open : undefined}
+                    initial={false}
+                    animate={open ? "open" : "collapsed"}
+                    variants={
+                      reduced ? instantAccordionVariants : accordionVariants
+                    }
+                  >
+                    <div className="faq-answer-inner">
+                      <p>{item.a}</p>
+                    </div>
+                  </motion.div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div className="faq-location-map-shell">
+          <iframe
+            className="faq-location-map"
+            src={c.contact.map.embedUrl}
+            title={c.contact.map.title}
+            loading="lazy"
+            allowFullScreen
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        </div>
       </Container>
     </section>
   );

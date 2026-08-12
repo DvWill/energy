@@ -18,12 +18,13 @@ Edite títulos, CTAs, benefícios, FAQ e contatos em `src/content/landing-page.t
 - `public/brand/energy-logo-horizontal-white-orange.png`
 - `public/brand/energy-symbol-black.png`
 - `public/brand/energy-symbol-orange.png` (também deve originar o favicon)
+- `public/models/energy-logo-3d.glb` (marca tridimensional da primeira seção)
 
-Os três arquivos oficiais estão organizados nesses caminhos e são utilizados no header, footer e favicon.
+Os assets oficiais estão organizados nesses caminhos e são utilizados no header, footer, favicon e hero.
 
 ## Animações
 
-A camada de movimento usa apenas `motion`. Curvas, durações, variantes e configuração de viewport ficam centralizadas em `src/lib/motion.ts`; as ilhas Client reutilizáveis ficam em `src/components/motion/`. O site respeita `prefers-reduced-motion` e mantém conteúdo, FAQ e navegação mobile acessíveis sem JavaScript.
+A camada de movimento da interface usa `motion`. Curvas, durações, variantes e configuração de viewport ficam centralizadas em `src/lib/motion.ts`; as ilhas Client reutilizáveis ficam em `src/components/motion/`. A marca 3D do hero usa `three`, é carregada progressivamente e mantém o símbolo 2D como fallback. O site respeita `prefers-reduced-motion` e mantém conteúdo, FAQ e navegação mobile acessíveis sem JavaScript.
 
 ## Temas
 
@@ -31,7 +32,11 @@ O seletor no header alterna entre os modos claro e escuro. Na primeira visita, o
 
 ## Integração de leads
 
-Copie `.env.example` para `.env.local`. Defina `NEXT_PUBLIC_SITE_URL` com o domínio canônico e `LEAD_WEBHOOK_URL` com um endpoint HTTPS de CRM, automação ou e-mail. O servidor envia JSON normalizado com `name`, `company`, `email`, `phone`, `message`, `source` e `submittedAt`. Sem webhook, a API responde 503 e a interface informa honestamente que o canal não está configurado.
+Copie `.env.example` para `.env.local`. Defina `NEXT_PUBLIC_SITE_URL` com o domínio canônico e `LEAD_WEBHOOK_URL` com um endpoint HTTPS de CRM, automação ou e-mail. O servidor envia JSON normalizado com `name`, `company`, `email`, `phone`, `message`, `origin`, `source` e `submittedAt`. Leads do chatbot também podem incluir `customerType`, `monthlyBill`, `city`, `state`, `analysisHorizon` e `estimatedSpendWithoutSolar`. Sem webhook, a API responde 503 e a interface informa honestamente que o canal não está configurado.
+
+## Calculadora e conversa de simulação
+
+A segunda seção da landing projeta o gasto informado para 1, 5, 10 ou 25 anos, com reajuste anual opcional. A projeção é educativa e não representa promessa de economia. O CTA do resultado transfere o valor, o período e a estimativa para o chatbot da sessão atual; nome, WhatsApp, e-mail e demais dados pessoais não são gravados em `localStorage`.
 
 Antes da publicação, configure proteção de borda/rate limit na hospedagem, revise a política com apoio jurídico e forneça os dados oficiais listados em `siteContent.pending`.
 

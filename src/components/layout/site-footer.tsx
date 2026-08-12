@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Brand } from "@/components/ui/brand";
 import { Container } from "@/components/ui/container";
 import { siteContent as c } from "@/content/landing-page";
@@ -15,9 +16,9 @@ export function SiteFooter() {
         <div>
           <strong>Navegação</strong>
           {c.navigation.map((x) => (
-            <a key={x.href} href={x.href}>
+            <Link key={x.href} href={x.href}>
               {x.label}
-            </a>
+            </Link>
           ))}
         </div>
         <div>
@@ -27,8 +28,8 @@ export function SiteFooter() {
         </div>
         <div>
           <strong>Informações</strong>
-          <a href="/privacidade">Privacidade</a>
-          <a href="/termos">Termos de uso</a>
+          <Link href="/privacidade">Privacidade</Link>
+          <Link href="/termos">Termos de uso</Link>
         </div>
       </Container>
       <Container>

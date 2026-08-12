@@ -4,9 +4,11 @@ import { withBasePath } from "@/lib/base-path";
 export function Brand({
   compact = false,
   dark = true,
+  adaptive = false,
 }: {
   compact?: boolean;
   dark?: boolean;
+  adaptive?: boolean;
 }) {
   if (compact)
     return (
@@ -17,6 +19,28 @@ export function Brand({
         width={639}
         height={644}
       />
+    );
+  if (adaptive)
+    return (
+      <span className="brand-adaptive" aria-hidden="true">
+        <span className="brand-adaptive-light">
+          <Image
+            src={withBasePath("/brand/energy-symbol-orange.png")}
+            alt=""
+            width={639}
+            height={644}
+          />
+          <strong>ENERGY</strong>
+        </span>
+        <Image
+          className="brand-logo brand-adaptive-dark"
+          src={withBasePath("/brand/energy-logo-horizontal-white-orange.png")}
+          alt=""
+          width={1763}
+          height={743}
+          priority
+        />
+      </span>
     );
   if (!dark)
     return (
