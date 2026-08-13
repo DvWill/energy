@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ConversationalLeadChat,
   type ChatSimulationContext,
@@ -12,6 +12,7 @@ import {
   type SavingsSimulation,
   calculateProjectedSpend,
 } from "@/lib/savings-calculator";
+import { OPEN_LEAD_CHAT_EVENT } from "@/lib/chat-events";
 
 export function LeadExperience() {
   const [monthlyBill, setMonthlyBill] = useState<number>(
@@ -24,6 +25,12 @@ export function LeadExperience() {
     null,
   );
   const [chatOpen, setChatOpen] = useState(false);
+
+  useEffect(() => {
+    const openChat = () => setChatOpen(true);
+    window.addEventListener(OPEN_LEAD_CHAT_EVENT, openChat);
+    return () => window.removeEventListener(OPEN_LEAD_CHAT_EVENT, openChat);
+  }, []);
 
   const saveCalculation = useCallback((simulation: SavingsSimulation) => {
     setCalculation(simulation);

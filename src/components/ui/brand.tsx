@@ -23,17 +23,8 @@ export function Brand({
   if (adaptive)
     return (
       <span className="brand-adaptive" aria-hidden="true">
-        <span className="brand-adaptive-light">
-          <Image
-            src={withBasePath("/brand/energy-symbol-orange.png")}
-            alt=""
-            width={639}
-            height={644}
-          />
-          <strong>ENERGY</strong>
-        </span>
         <Image
-          className="brand-logo brand-adaptive-dark"
+          className="brand-logo"
           src={withBasePath("/brand/energy-logo-horizontal-white-orange.png")}
           alt=""
           width={1763}

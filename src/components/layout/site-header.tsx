@@ -13,6 +13,7 @@ import {
   useFinePointer,
 } from "@/hooks/use-accessible-motion";
 import { withBasePath } from "@/lib/base-path";
+import { openLeadChat } from "@/lib/chat-events";
 import {
   instantMenuVariants,
   menuVariants,
@@ -61,17 +62,36 @@ export function SiteHeader() {
       .filter((id): id is string => Boolean(id))
       .map((id) => document.getElementById(id))
       .filter((section): section is HTMLElement => Boolean(section));
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible) setActiveId(visible.target.id);
-      },
-      { rootMargin: "-28% 0px -58% 0px", threshold: [0.08, 0.3, 0.6] },
-    );
-    sections.forEach((section) => observer.observe(section));
-    return () => observer.disconnect();
+    let frame = 0;
+    const updateActiveSection = () => {
+      frame = 0;
+      const readingLine = Math.min(180, window.innerHeight * 0.22);
+      const current = sections.find((section) => {
+        const rect = section.getBoundingClientRect();
+        return rect.top <= readingLine && rect.bottom > readingLine;
+      });
+
+      if (current) {
+        setActiveId(current.id);
+        return;
+      }
+
+      const previous = sections
+        .filter((section) => section.getBoundingClientRect().top <= readingLine)
+        .at(-1);
+      setActiveId(previous?.id ?? "");
+    };
+    const onSectionScroll = () => {
+      if (!frame) frame = requestAnimationFrame(updateActiveSection);
+    };
+    updateActiveSection();
+    addEventListener("scroll", onSectionScroll, { passive: true });
+    addEventListener("resize", onSectionScroll);
+    return () => {
+      removeEventListener("scroll", onSectionScroll);
+      removeEventListener("resize", onSectionScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
   }, [pathname]);
 
   useEffect(() => {
@@ -117,9 +137,15 @@ export function SiteHeader() {
       })}
       <motion.a
         className="button button-small"
-        href={resolveHref("/#contato")}
+        href={resolveHref("/#calculadora")}
         tabIndex={mobile && hydrated && !open ? -1 : undefined}
-        onClick={() => setOpen(false)}
+        onClick={(event) => {
+          setOpen(false);
+          if (pathname === "/") {
+            event.preventDefault();
+            openLeadChat();
+          }
+        }}
         whileHover={
           finePointer && !reduced ? { scale: 1.025, y: -1 } : undefined
         }

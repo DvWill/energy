@@ -10,12 +10,11 @@ export const siteContent = {
     email: "[E-MAIL PENDENTE]",
     // PENDENTE: informar a URL oficial do WhatsApp, incluindo o número com DDI.
     whatsappUrl: "",
-    // PENDENTE: informar cidades, estados ou regiões efetivamente atendidas.
-    location: "[ÁREA DE ATENDIMENTO PENDENTE]",
+    location: "Cidade Ocidental, GO",
     map: {
-      title: "Mapa da área de atendimento da Energy em Luziânia, Goiás",
+      title: "Localização da Energy em Cidade Ocidental, Goiás",
       embedUrl:
-        "https://www.google.com/maps?q=Luzi%C3%A2nia%2C%20Goi%C3%A1s&output=embed",
+        "https://www.google.com/maps?q=Cidade%20Ocidental%2C%20Goi%C3%A1s&output=embed",
     },
   },
   navigation: [
@@ -23,7 +22,7 @@ export const siteContent = {
     { label: "Soluções", href: "/#solucoes" },
     { label: "Quem somos", href: "/#quem-somos" },
     { label: "Processo", href: "/#processo" },
-    { label: "FAQ", href: "/#faq" },
+    { label: "Localização", href: "/#faq" },
     { label: "BLOG", href: "/blog" },
   ],
   cta: {
@@ -349,7 +348,7 @@ export const siteContent = {
   // PENDENTE: adicionar somente depoimento/case real, autorizado e identificável.
   testimonial: null,
   faqSection: {
-    eyebrow: "FAQ",
+    eyebrow: "Localização",
     title: "Aproveite o sol e comece a economizar hoje!",
   },
   faq: [

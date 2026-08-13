@@ -5,6 +5,34 @@ html[data-theme="dark"] .social-blog{background:#061522;color:#f4f7fb}html[data-
 @media(max-width:760px){.social-blog{padding-top:78px}.social-blog-header>.container{grid-template-columns:1fr;gap:22px;padding-top:30px;padding-bottom:30px}.social-layout{display:block;width:min(100% - 20px,650px);padding-top:12px}.social-sidebar{position:static;margin-bottom:12px}.social-sidebar>strong,.sidebar-note{display:none}.social-sidebar nav{display:flex;gap:7px;overflow-x:auto;padding:2px}.social-sidebar nav a{flex:none;padding:8px 11px;border:1px solid #dce4ea;border-radius:999px;background:#fff;font-size:.75rem}.social-sidebar nav a svg{width:15px}.social-feed{gap:11px}.feed-top{padding:14px;border-radius:14px}.social-feed .blog-card{border-radius:14px}.feed-author{padding:13px 14px 10px}.social-feed .blog-card-copy{padding:16px}.social-feed .blog-card h2,.social-feed .blog-card-featured h2{font-size:1.25rem}.social-feed .blog-card-copy>p{font-size:.85rem}.social-blog-header h1{font-size:2.55rem}.blog-category-filters{margin-inline:-2px}.blog-category-filters button{padding:6px 10px}}
 @media(prefers-reduced-motion:reduce){.social-feed .blog-card,.social-feed .blog-cover{transition:none}}
 
+/* Energy Conecta: definitive light/dark palettes live in the blog layer. */
+html[data-theme="light"] body .energy-news-page{background:#edf3f7!important;color:#102f4d}
+html[data-theme="light"] body .energy-news-page :is(.news-hero h1,.news-card-copy h2,.news-empty h2){color:#102f4d!important}
+html[data-theme="light"] body .energy-news-page :is(.news-hero p,.news-card-copy p){color:#50677c!important}
+html[data-theme="light"] body .energy-news-page .news-categories button{color:#385570}
+html[data-theme="light"] body .energy-news-page .news-categories button>span{background:rgba(255,255,255,.5);box-shadow:inset 0 0 0 4px #edf3f7}
+html[data-theme="light"] body .energy-news-page :is(.news-left,.news-card,.news-search,.news-trending){border-color:rgba(16,47,77,.15);background:rgba(255,255,255,.7);box-shadow:none}
+html[data-theme="light"] body .energy-news-page .news-left>strong{color:#61788d}
+html[data-theme="light"] body .energy-news-page .news-left nav button{color:#50677c}
+html[data-theme="light"] body .energy-news-page .news-left nav button.active{background:rgba(249,95,27,.1);color:#102f4d}
+html[data-theme="light"] body .energy-news-page .news-avatar{background:#dfe9f0}
+html[data-theme="light"] body .energy-news-page .news-card>header>strong{color:#102f4d}
+html[data-theme="light"] body .energy-news-page :is(.news-card time,.news-source,.news-card>footer,.news-end){color:#61788d}
+html[data-theme="light"] body .energy-news-page .news-card footer button{color:#385570}
+html[data-theme="light"] body .energy-news-page :is(.article-external-link,.news-source a){color:#d84d10}
+html[data-theme="light"] body .energy-news-page .news-search>svg{color:#61788d}
+html[data-theme="light"] body .energy-news-page .news-search input{color:#102f4d}
+html[data-theme="light"] body .energy-news-page .news-search input::placeholder{color:#71869a}
+html[data-theme="light"] body .energy-news-page .news-search button{color:#102f4d}
+html[data-theme="light"] body .energy-news-page :is(.news-trending h2,.news-trending>a){color:#102f4d}
+html[data-theme="light"] body .energy-news-page .news-trending small{color:#71869a}
+html[data-theme="light"] body .energy-news-page .news-mobile-filter{border-color:rgba(16,47,77,.18);background:rgba(255,255,255,.76);color:#102f4d}
+html[data-theme="light"] body .energy-news-page .news-left.open{background:#f7fafc}
+html[data-theme="light"] body .energy-news-page .news-filter-close{color:#102f4d}
+html[data-theme="light"] body .energy-news-page :is(.news-empty button,.news-load-more){color:#102f4d}
+html[data-theme="dark"] body .energy-news-page{background:#071f33!important;color:#fff}
+html[data-theme="dark"] body .energy-news-page :is(.news-hero h1,.news-card-copy h2,.news-empty h2){color:#fff!important}
+
 /* Movimento e estados do blog: discretos, progressivos e isolados das áreas administrativas. */
 .social-blog-header {
   position: relative;
@@ -501,5 +529,36 @@ html[data-theme="dark"] :is(.blog-skeleton-line, .blog-skeleton-card)::after {
     opacity: 1 !important;
     transform: none !important;
     animation: none !important;
+  }
+}
+
+/* Keep the same white/orange Energy signature readable in both header themes. */
+html[data-theme="light"] .site-header .logo-link {
+  box-sizing: border-box;
+  min-width: 174px;
+  padding: 0 10px;
+  border-radius: 9px;
+  background: #071f33 !important;
+}
+html[data-theme="light"] .site-header .brand-adaptive,
+html[data-theme="dark"] .site-header .brand-adaptive {
+  width: 154px;
+  height: 54px;
+}
+html[data-theme="light"] .site-header .brand-adaptive > .brand-logo,
+html[data-theme="dark"] .site-header .brand-adaptive > .brand-logo {
+  display: block !important;
+  width: 154px;
+  height: 54px;
+  object-fit: contain;
+}
+@media (max-width: 850px) {
+  html[data-theme="light"] .site-header .logo-link { min-width: 150px; }
+  html[data-theme="light"] .site-header .brand-adaptive,
+  html[data-theme="dark"] .site-header .brand-adaptive,
+  html[data-theme="light"] .site-header .brand-adaptive > .brand-logo,
+  html[data-theme="dark"] .site-header .brand-adaptive > .brand-logo {
+    width: 132px;
+    height: 48px;
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useSyncExternalStore } from "react";
-import { ChevronDown, CircleHelp } from "lucide-react";
+import { ChevronDown, MapPin } from "lucide-react";
 import { motion } from "motion/react";
 import { siteContent as c } from "@/content/landing-page";
 import { Container } from "@/components/ui/container";
@@ -32,9 +32,8 @@ export function FaqSection() {
         <div className="faq-location-copy">
           <div className="faq-location-heading motion-heading">
             <span className="faq-location-badge">
-              <CircleHelp aria-hidden="true" />
+              <MapPin aria-hidden="true" />
               <span>{c.faqSection.eyebrow}</span>
-              <strong aria-hidden="true">+</strong>
             </span>
             <h2 id="faq-title">{c.faqSection.title}</h2>
             <span className="line-reveal" aria-hidden="true" />

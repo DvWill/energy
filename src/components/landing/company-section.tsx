@@ -3,14 +3,12 @@
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
-import { AnimatePresence, motion, type PanInfo } from "motion/react";
+import { motion, type PanInfo } from "motion/react";
 import { Container } from "@/components/ui/container";
 import { withBasePath } from "@/lib/base-path";
 import { useAccessibleMotion } from "@/hooks/use-accessible-motion";
 import {
-  carouselVariants,
   microTransition,
-  progressVariants,
   revealVariants,
   sectionTransition,
   viewportOnce,
@@ -59,38 +57,40 @@ const slides = [
   },
 ] as const;
 
+function relativePosition(index: number, active: number) {
+  let position = index - active;
+  const midpoint = Math.floor(slides.length / 2);
+  if (position > midpoint) position -= slides.length;
+  if (position < -midpoint) position += slides.length;
+  return position;
+}
+
 export function CompanySection() {
-  const [[active, direction], setSlide] = useState([0, 1]);
+  const [active, setActive] = useState(1);
   const reduced = useAccessibleMotion();
-  const slide = slides[active];
 
   const paginate = (delta: number) => {
-    setSlide(([current]) => [
-      (current + delta + slides.length) % slides.length,
-      delta > 0 ? 1 : -1,
-    ]);
+    setActive((current) => (current + delta + slides.length) % slides.length);
   };
 
-  const select = (index: number) => {
-    if (index === active) return;
-    setSlide([index, index > active ? 1 : -1]);
-  };
-
-  const finishDrag = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    const intent = info.offset.x + info.velocity.x * 0.16;
-    if (intent < -70) paginate(1);
-    if (intent > 70) paginate(-1);
+  const finishDrag = (
+    _event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo,
+  ) => {
+    const intent = info.offset.x + info.velocity.x * 0.14;
+    if (intent < -65) paginate(1);
+    if (intent > 65) paginate(-1);
   };
 
   return (
     <section
       id="quem-somos"
-      className="section company-section"
+      className="section company-section company-editorial"
       aria-labelledby="company-title"
     >
       <Container>
         <motion.div
-          className="company-lead"
+          className="company-lead company-editorial-lead"
           data-motion-reveal=""
           initial={reduced ? false : "hidden"}
           whileInView="visible"
@@ -99,30 +99,33 @@ export function CompanySection() {
           transition={reduced ? { duration: 0 } : sectionTransition}
         >
           <div>
-            <EyebrowReveal className="eyebrow dark">CONHEÇA A ENERGY</EyebrowReveal>
+            <EyebrowReveal className="eyebrow dark">
+              POR DENTRO DA ENERGY
+            </EyebrowReveal>
             <TextReveal
               id="company-title"
-              lines={[{ content: "Quem somos?" }]}
+              lines={[
+                {
+                  content:
+                    "Histórias, tecnologia e pessoas que movem nossos projetos.",
+                },
+              ]}
             />
-            <h3>
-              Pessoas e técnica para transformar boas escolhas em projetos de
-              energia.
-            </h3>
             <LineReveal />
           </div>
           <p>
-            Uma equipe próxima, preparada para entender cada contexto e
-            organizar os próximos passos com clareza.
+            Conheça nossa estrutura, nosso atendimento e as soluções por
+            trás de cada projeto.
           </p>
         </motion.div>
 
         <motion.div
-          className="company-carousel"
-          data-motion-reveal=""
+          className="company-center-carousel"
           role="region"
           aria-roledescription="carrossel"
-          aria-label="Conheça a Energy"
+          aria-label="Por dentro da Energy"
           aria-describedby="company-carousel-instructions"
+          tabIndex={0}
           onKeyDown={(event) => {
             if (event.key === "ArrowLeft") {
               event.preventDefault();
@@ -133,7 +136,6 @@ export function CompanySection() {
               paginate(1);
             }
           }}
-          tabIndex={0}
           initial={reduced ? false : "hidden"}
           whileInView="visible"
           viewport={viewportOnce}
@@ -141,107 +143,104 @@ export function CompanySection() {
           transition={reduced ? { duration: 0 } : sectionTransition}
         >
           <span className="sr-only" id="company-carousel-instructions">
-            Use as setas, os botões ou arraste a imagem para trocar o conteúdo.
+            Use as setas do teclado, os botões ou arraste para navegar pelos
+            cinco conteúdos.
           </span>
 
-          <div className="carousel-image">
-            <AnimatePresence initial={false} custom={direction} mode="wait">
-              <motion.div
-                className="carousel-image-slide"
-                custom={direction}
-                key={slide.src}
-                variants={reduced ? undefined : carouselVariants}
-                initial={reduced ? false : "enter"}
-                animate="center"
-                exit={reduced ? undefined : "exit"}
-                drag={reduced ? false : "x"}
-                dragConstraints={{ left: 0, right: 0 }}
-                dragDirectionLock
-                dragElastic={0.12}
-                dragMomentum={false}
-                onDragEnd={finishDrag}
-                style={{ touchAction: "pan-y" }}
-                data-motion-carousel=""
-              >
-                <Image
-                  src={withBasePath(slide.src)}
-                  alt={slide.alt}
-                  draggable={false}
-                  fill
-                  priority={active === 0}
-                  sizes="(max-width: 800px) 100vw, 66vw"
+          <motion.div
+            className="company-carousel-stage"
+            drag={reduced ? false : "x"}
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.08}
+            dragMomentum={false}
+            onDragEnd={finishDrag}
+            style={{ touchAction: "pan-y" }}
+          >
+            {slides.map((slide, index) => {
+              const position = relativePosition(index, active);
+              const isActive = position === 0;
+              const isAdjacent = Math.abs(position) === 1;
+              const offset = position * 92;
+
+              return (
+                <motion.button
+                  type="button"
+                  className="company-story-card"
+                  data-active={isActive ? "true" : "false"}
+                  data-adjacent={isAdjacent ? "true" : "false"}
+                  key={slide.src}
+                  aria-label={`${slide.eyebrow}: ${slide.title}${isActive ? ", conteúdo atual" : ", mostrar conteúdo"}`}
+                  aria-current={isActive ? "true" : undefined}
+                  tabIndex={isActive || isAdjacent ? 0 : -1}
+                  onClick={() => setActive(index)}
+                  animate={{
+                    x: `${offset}%`,
+                    scale: isActive ? 1.06 : isAdjacent ? 0.9 : 0.78,
+                    opacity: isActive ? 1 : isAdjacent ? 0.9 : 0.48,
+                    zIndex: isActive ? 5 : isAdjacent ? 3 : 1,
+                  }}
+                  transition={
+                    reduced
+                      ? { duration: 0 }
+                      : { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
+                  }
+                >
+                  <Image
+                    src={withBasePath(slide.src)}
+                    alt={slide.alt}
+                    draggable={false}
+                    fill
+                    priority={index === 0}
+                    sizes="(max-width: 600px) 86vw, (max-width: 1000px) 70vw, 62vw"
+                  />
+                  <span className="company-story-shade" aria-hidden="true" />
+                  <span className="company-story-copy">
+                    <span className="company-story-eyebrow">
+                      {slide.eyebrow}
+                    </span>
+                    <strong>{slide.title}</strong>
+                  </span>
+                </motion.button>
+              );
+            })}
+          </motion.div>
+
+          <motion.button
+            type="button"
+            className="company-carousel-arrow company-carousel-arrow-prev"
+            onClick={() => paginate(-1)}
+            aria-label="História anterior"
+            whileHover={reduced ? undefined : { scale: 1.06 }}
+            whileTap={reduced ? undefined : { scale: 0.95 }}
+            transition={microTransition}
+          >
+            <ChevronLeft aria-hidden="true" />
+          </motion.button>
+          <motion.button
+            type="button"
+            className="company-carousel-arrow company-carousel-arrow-next"
+            onClick={() => paginate(1)}
+            aria-label="Próxima história"
+            whileHover={reduced ? undefined : { scale: 1.06 }}
+            whileTap={reduced ? undefined : { scale: 0.95 }}
+            transition={microTransition}
+          >
+            <ChevronRight aria-hidden="true" />
+          </motion.button>
+
+          <div className="company-carousel-status" aria-live="polite">
+            <span className="company-carousel-count">
+              <strong>{String(active + 1).padStart(2, "0")}</strong>
+              <span>/ {String(slides.length).padStart(2, "0")}</span>
+            </span>
+            <span className="company-carousel-segments" aria-hidden="true">
+              {slides.map((slide, index) => (
+                <span
+                  key={slide.src}
+                  className={index === active ? "active" : ""}
                 />
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          <div className="carousel-copy" aria-live="polite" aria-atomic="true">
-            <AnimatePresence initial={false} custom={direction} mode="wait">
-              <motion.div
-                className="carousel-copy-slide"
-                custom={direction}
-                key={`copy-${slide.src}`}
-                variants={reduced ? undefined : carouselVariants}
-                initial={reduced ? false : "enter"}
-                animate="center"
-                exit={reduced ? undefined : "exit"}
-              >
-                <span>{slide.eyebrow}</span>
-                <h3>{slide.title}</h3>
-                <p>{slide.text}</p>
-                <div className="carousel-meta">
-                  <strong>{String(active + 1).padStart(2, "0")}</strong>
-                  <span>/ {String(slides.length).padStart(2, "0")}</span>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          <div className="carousel-progress" aria-hidden="true">
-            <motion.span
-              initial={false}
-              animate={{ scaleX: (active + 1) / slides.length }}
-              variants={reduced ? undefined : progressVariants}
-              transition={reduced ? { duration: 0 } : sectionTransition}
-            />
-          </div>
-
-          <div className="carousel-controls">
-            <motion.button
-              type="button"
-              onClick={() => paginate(-1)}
-              aria-label="Imagem anterior"
-              whileHover={reduced ? undefined : { scale: 1.055 }}
-              whileTap={reduced ? undefined : { scale: 0.96 }}
-              transition={microTransition}
-            >
-              <ChevronLeft aria-hidden="true" />
-            </motion.button>
-            <motion.button
-              type="button"
-              onClick={() => paginate(1)}
-              aria-label="Próxima imagem"
-              whileHover={reduced ? undefined : { scale: 1.055 }}
-              whileTap={reduced ? undefined : { scale: 0.96 }}
-              transition={microTransition}
-            >
-              <ChevronRight aria-hidden="true" />
-            </motion.button>
-          </div>
-
-          <div className="carousel-dots" aria-label="Selecionar imagem">
-            {slides.map((item, index) => (
-              <motion.button
-                key={item.src}
-                type="button"
-                className={index === active ? "active" : ""}
-                onClick={() => select(index)}
-                aria-label={`Mostrar imagem ${index + 1}: ${item.eyebrow}`}
-                aria-current={index === active ? "true" : undefined}
-                whileHover={reduced ? undefined : { scale: 1.15 }}
-                transition={microTransition}
-              />
-            ))}
+              ))}
+            </span>
           </div>
         </motion.div>
       </Container>

@@ -9,10 +9,18 @@ const countDuration = 1_050;
 
 type Metric = (typeof c.metrics)[number];
 
-function AnimatedMetric({ value, suffix, label }: Metric) {
-  const [displayValue, setDisplayValue] = useState<number>(value);
+function AnimatedMetric({
+  value,
+  suffix,
+  label,
+  delay,
+}: Metric & { delay: number }) {
+  const metricRef = useRef<HTMLElement>(null);
+  const [displayValue, setDisplayValue] = useState(0);
   const [counting, setCounting] = useState(false);
   const frameRef = useRef<number | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const completedRef = useRef(false);
   const reduced = useAccessibleMotion();
 
   const cancelCount = useCallback(() => {
@@ -20,49 +28,73 @@ function AnimatedMetric({ value, suffix, label }: Metric) {
       cancelAnimationFrame(frameRef.current);
       frameRef.current = null;
     }
+    if (timeoutRef.current !== null) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
   }, []);
 
   const startCount = useCallback(() => {
+    if (completedRef.current) return;
     cancelCount();
 
     if (reduced) {
       setDisplayValue(value);
       setCounting(false);
+      completedRef.current = true;
       return;
     }
 
-    const startedAt = performance.now();
-    setDisplayValue(0);
-    setCounting(true);
+    timeoutRef.current = setTimeout(() => {
+      timeoutRef.current = null;
+      const startedAt = performance.now();
+      setCounting(true);
 
-    const update = (now: number) => {
-      const progress = Math.min((now - startedAt) / countDuration, 1);
-      const easedProgress = 1 - Math.pow(1 - progress, 3);
+      const update = (now: number) => {
+        const progress = Math.min((now - startedAt) / countDuration, 1);
+        const easedProgress = 1 - Math.pow(1 - progress, 3);
 
-      setDisplayValue(Math.round(value * easedProgress));
+        setDisplayValue(Math.round(value * easedProgress));
 
-      if (progress < 1) {
-        frameRef.current = requestAnimationFrame(update);
-        return;
-      }
+        if (progress < 1) {
+          frameRef.current = requestAnimationFrame(update);
+          return;
+        }
 
-      frameRef.current = null;
-      setDisplayValue(value);
-      setCounting(false);
-    };
+        frameRef.current = null;
+        completedRef.current = true;
+        setDisplayValue(value);
+        setCounting(false);
+      };
 
-    frameRef.current = requestAnimationFrame(update);
-  }, [cancelCount, reduced, value]);
+      frameRef.current = requestAnimationFrame(update);
+    }, delay);
+  }, [cancelCount, delay, reduced, value]);
+
+  useEffect(() => {
+    const metric = metricRef.current;
+    if (!metric) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        startCount();
+        observer.disconnect();
+      },
+      { threshold: 0.2 },
+    );
+
+    observer.observe(metric);
+    return () => observer.disconnect();
+  }, [startCount]);
 
   useEffect(() => cancelCount, [cancelCount]);
 
   return (
     <article
+      ref={metricRef}
       className="solar-metric"
       data-counting={counting ? "true" : "false"}
-      onPointerEnter={startCount}
-      onFocus={startCount}
-      tabIndex={0}
     >
       <span className="solar-metric-value" aria-hidden="true">
         {displayValue}
@@ -85,8 +117,12 @@ export function MetricsSection() {
     >
       <Container>
         <div className="solar-metrics-card">
-          {c.metrics.map((metric) => (
-            <AnimatedMetric key={metric.label} {...metric} />
+          {c.metrics.map((metric, index) => (
+            <AnimatedMetric
+              key={metric.label}
+              {...metric}
+              delay={index * 140}
+            />
           ))}
         </div>
       </Container>
