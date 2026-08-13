@@ -1,7 +1,9 @@
 export type NewsItem = {
-  id: number; slug: string; title: string; category: string; date: string; dateISO: string;
-  readTime: string; excerpt: string; sourceName: string; sourceUrl: string; image: string;
+  id: number | string; slug: string; title: string; category: string; date: string; dateISO: string;
+  readTime: string; excerpt: string; sourceName?: string; sourceUrl?: string; image: string;
   imageAlt: string; featured?: boolean; trending?: boolean; views: number; keywords: string[];
+  articleUrl?: string;
+  managed?: boolean;
 };
 
 export const newsData: NewsItem[] = [

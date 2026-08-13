@@ -562,3 +562,15 @@ html[data-theme="dark"] .site-header .brand-adaptive > .brand-logo {
     height: 48px;
   }
 }
+@media (max-width: 300px) {
+  html[data-theme="light"] .site-header .logo-link {
+    min-width: 132px;
+    padding-inline: 8px;
+  }
+  html[data-theme="light"] .site-header .brand-adaptive,
+  html[data-theme="dark"] .site-header .brand-adaptive,
+  html[data-theme="light"] .site-header .brand-adaptive > .brand-logo,
+  html[data-theme="dark"] .site-header .brand-adaptive > .brand-logo {
+    width: 114px;
+  }
+}

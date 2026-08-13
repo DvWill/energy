@@ -490,8 +490,8 @@ export function StaggerRows({
           variants={reduced ? undefined : staggerItemVariants}
         >
           <strong role="rowheader">{row.cells[0]}</strong>
-          <span role="cell">{row.cells[1]}</span>
-          <span role="cell">{row.cells[2]}</span>
+          <span role="cell" data-label={typeof headers[1] === "string" ? headers[1] : undefined}>{row.cells[1]}</span>
+          <span role="cell" data-label={typeof headers[2] === "string" ? headers[2] : undefined}>{row.cells[2]}</span>
         </motion.div>
       ))}
     </motion.div>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
-import { Clock3 } from "lucide-react";
+import { Clock3, ExternalLink } from "lucide-react";
 import { eq } from "drizzle-orm";
 import { PostCard } from "@/components/blog/post-card";
 import { ShareButtons } from "@/components/blog/share-buttons";
@@ -163,6 +163,17 @@ export default async function ArticlePage({
               <p className="article-subtitle">{post.subtitle}</p>
             )}
             <p className="article-summary">{post.summary}</p>
+            {post.sourceName && post.sourceUrl && (
+              <a
+                className="article-source-link"
+                href={post.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Fonte: {post.sourceName}
+                <ExternalLink aria-hidden="true" />
+              </a>
+            )}
             <div className="article-meta">
               {author && <span>Por {author.displayName}</span>}
               {post.publishedAt && (
@@ -225,6 +236,21 @@ export default async function ArticlePage({
             <ShareButtons title={post.title} />
           </aside>
         </Reveal>
+
+        {post.sourceName && post.sourceUrl && (
+          <Reveal className="article-original-source container">
+            <p>Este conteúdo referencia uma publicação externa.</p>
+            <a
+              className="button"
+              href={post.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Ler notícia original em {post.sourceName}
+              <ExternalLink aria-hidden="true" />
+            </a>
+          </Reveal>
+        )}
 
         {author && (
           <Reveal className="article-author-reveal">

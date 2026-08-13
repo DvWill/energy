@@ -64,6 +64,8 @@ export const posts = pgTable(
     subtitle: text("subtitle"),
     summary: text("summary").notNull(),
     content: text("content").notNull(),
+    sourceName: text("source_name"),
+    sourceUrl: text("source_url"),
     coverImageUrl: text("cover_image_url"),
     coverImageId: text("cover_image_id"),
     coverImageAlt: text("cover_image_alt"),

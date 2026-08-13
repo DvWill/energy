@@ -157,7 +157,7 @@ test("jornada essencial da landing page", async ({ page }) => {
   ).toBeVisible();
   await page
     .getByRole("navigation", { name: "Navegação principal" })
-    .getByRole("link", { name: "FAQ" })
+    .getByRole("link", { name: "Localização" })
     .click();
   await expect(page).toHaveURL(/#faq/);
   const faq = page.getByRole("button", {
@@ -165,261 +165,89 @@ test("jornada essencial da landing page", async ({ page }) => {
   });
   await faq.click();
   await expect(faq).toHaveAttribute("aria-expanded", "false");
-  await page.getByRole("button", { name: "Enviar solicitação" }).click();
-  await expect(page.getByText("Informe seu nome.")).toBeVisible();
+  const { dialog } = await openFloatingChat(page);
+  const monthlyBill = await startChat(dialog);
+  await dialog.getByRole("button", { name: "Continuar" }).click();
+  await expect(
+    dialog.getByText("Informe um valor de conta maior que zero."),
+  ).toBeVisible();
+  await expect(monthlyBill).toHaveAttribute("aria-invalid", "true");
 });
 
-test("indicadores contam no hover e o mapa permanece acessível", async ({
+test("indicadores contam ao entrar na viewport e o mapa permanece acessível", async ({
   page,
 }) => {
   await page.goto("/");
 
   const metrics = page.getByRole("region", { name: "Resultados da Energy" });
   const values = metrics.locator(".solar-metric-value");
-  await expect(values).toHaveText(["7+", "35k", "98%"]);
+  await expect(values).toHaveText(["0+", "0k", "0%"]);
 
   const firstMetric = metrics.locator(".solar-metric").first();
-  await firstMetric.hover();
+  await metrics.scrollIntoViewIfNeeded();
   await expect(firstMetric).toHaveAttribute("data-counting", "true");
   await expect(firstMetric).toHaveAttribute("data-counting", "false", {
-    timeout: 2_500,
+    timeout: 3_000,
   });
-  await expect(firstMetric.locator(".solar-metric-value")).toHaveText("7+");
+  await expect(values).toHaveText(["7+", "35k", "98%"], {
+    timeout: 3_000,
+  });
 
   const map = page.getByTitle(
-    "Mapa da área de atendimento da Energy em Luziânia, Goiás",
+    "Localização da Energy em Cidade Ocidental, Goiás",
   );
   await expect(map).toHaveAttribute("loading", "lazy");
   await expect(map).toHaveAttribute("src", /google\.com\/maps/);
 });
 
-test("transições conectam todas as superfícies sem interferir na página", async ({
+test("as dez seções mantêm a ordem e a continuidade visual da página", async ({
   page,
 }) => {
   await page.goto("/");
 
-  const expectedTransitions = [
-    "hero-calculator",
-    "calculator-problem",
-    "problem-solutions",
-    "solutions-benefits",
-    "benefits-company",
-    "company-process",
-    "process-differentiators",
-    "differentiators-metrics",
-    "metrics-faq",
-    "faq-cta",
-    "cta-contact",
-    "contact-footer",
-  ];
-  const expectedDepths = [
-    "continuous",
-    "soft",
-    "soft",
-    "soft",
-    "continuous",
-    "deep",
-    "deep",
-    "continuous",
-    "continuous",
-    "deep",
-    "deep",
-    "deep",
-  ];
-  const transitions = page.locator("[data-flow-transition]");
-
-  await expect(transitions).toHaveCount(expectedTransitions.length);
-  expect(
-    await transitions.evaluateAll((elements) =>
-      elements.map((element) => element.getAttribute("data-flow-transition")),
-    ),
-  ).toEqual(expectedTransitions);
-  expect(
-    await transitions.evaluateAll((elements) =>
-      elements.map((element) => element.getAttribute("data-flow-depth")),
-    ),
-  ).toEqual(expectedDepths);
-
-  const flowStructure = await page
-    .locator("main.home-flow")
-    .evaluate((main) => {
-      const nodes = Array.from(main.children).filter((element) =>
-        element.matches("section,[data-flow-transition]"),
-      );
+  const sections = page.locator("main.home-flow > section");
+  await expect(sections).toHaveCount(10);
+  const structure = await sections.evaluateAll((elements) =>
+    elements.map((element, index) => {
+      const rect = element.getBoundingClientRect();
+      const previous =
+        index > 0 ? elements[index - 1].getBoundingClientRect() : null;
       return {
-        alternates: nodes.every((element, index) =>
-          index % 2 === 0
-            ? element.tagName === "SECTION"
-            : element.hasAttribute("data-flow-transition"),
-        ),
-        borders: nodes
-          .filter((element) => element.hasAttribute("data-flow-transition"))
-          .map((element) => {
-            const style = getComputedStyle(element);
-            return [style.borderTopWidth, style.borderBottomWidth];
-          }),
-        gaps: nodes.flatMap((element, index) => {
-          if (!element.hasAttribute("data-flow-transition")) return [];
-          const rect = element.getBoundingClientRect();
-          const previous = nodes[index - 1]?.getBoundingClientRect();
-          const next = nodes[index + 1]?.getBoundingClientRect();
-          return [
-            previous ? rect.top - previous.bottom : 0,
-            next ? next.top - rect.bottom : 0,
-          ];
-        }),
-        sectionCount: nodes.filter((element) => element.tagName === "SECTION")
-          .length,
-        transitionCount: nodes.filter((element) =>
-          element.hasAttribute("data-flow-transition"),
-        ).length,
-      };
-    });
-  expect(flowStructure.alternates).toBe(true);
-  expect(flowStructure.sectionCount).toBe(12);
-  expect(flowStructure.transitionCount).toBe(11);
-  expect(flowStructure.borders.flat()).toEqual(
-    Array.from({ length: 22 }, () => "0px"),
-  );
-  expect(Math.max(...flowStructure.gaps)).toBeLessThanOrEqual(1);
-  await expect(
-    page.locator(
-      'main.home-flow + [data-flow-transition="contact-footer"] + footer.footer',
-    ),
-  ).toHaveCount(1);
-
-  const presentation = await transitions.evaluateAll((elements) =>
-    elements.map((element) => {
-      const style = getComputedStyle(element);
-      const decorations = Array.from(
-        element.querySelectorAll<HTMLElement>("[data-flow-decoration]"),
-      );
-      const orangeTrace = element.querySelector<SVGPathElement>(
-        ".section-transition__trace--orange",
-      );
-      const blueTrace = element.querySelector<SVGPathElement>(
-        ".section-transition__trace--blue",
-      );
-      const solarField = element.querySelector<HTMLElement>(
-        '[data-flow-decoration="solar-field"]',
-      );
-      const lightBeam = element.querySelector<HTMLElement>(
-        '[data-flow-decoration="light-beam"]',
-      );
-      return {
-        ariaHidden: element.getAttribute("aria-hidden"),
-        animationName: style.animationName,
-        animations: element.getAnimations({ subtree: true }).length,
-        backgroundImage: style.backgroundImage,
-        blueStroke: blueTrace ? getComputedStyle(blueTrace).stroke : "",
-        decorationCount: decorations.length,
-        decorationNames: decorations.map((decoration) =>
-          decoration.getAttribute("data-flow-decoration"),
-        ),
-        decorationPointerEvents: decorations.map(
-          (decoration) => getComputedStyle(decoration).pointerEvents,
-        ),
-        focusableCount: element.querySelectorAll(
-          'a,button,input,select,textarea,iframe,[contenteditable="true"],[tabindex]:not([tabindex="-1"])',
-        ).length,
-        height: element.getBoundingClientRect().height,
-        isolation: style.isolation,
-        lightBeamBackground: lightBeam
-          ? getComputedStyle(lightBeam).backgroundImage
-          : "",
-        orangeStroke: orangeTrace ? getComputedStyle(orangeTrace).stroke : "",
-        overflow: style.overflow,
-        pointerEvents: style.pointerEvents,
-        pseudoPointerEvents: [
-          getComputedStyle(element, "::before").pointerEvents,
-          getComputedStyle(element, "::after").pointerEvents,
-        ],
-        solarFieldBackground: solarField
-          ? getComputedStyle(solarField).backgroundImage
-          : "",
-        solarFieldBackgroundSize: solarField
-          ? getComputedStyle(solarField).backgroundSize
-          : "",
+        identity:
+          element.id ||
+          element.getAttribute("aria-label") ||
+          element
+            .querySelector('[aria-label="Comparação de abordagens"]')
+            ?.getAttribute("aria-label"),
+        height: rect.height,
+        gapFromPrevious: previous ? rect.top - previous.bottom : 0,
       };
     }),
   );
 
-  for (const transition of presentation) {
-    expect(transition.ariaHidden).toBe("true");
-    expect(transition.animationName).toBe("none");
-    expect(transition.animations).toBe(0);
-    expect(transition.backgroundImage).toContain("linear-gradient");
-    expect(transition.blueStroke).toMatch(/(?:23, 63, 109|57, 101, 143)/);
-    expect(transition.decorationCount).toBe(4);
-    expect(transition.decorationNames).toEqual([
-      "solar-field",
-      "light-beam",
-      "traces",
-      "node",
-    ]);
-    expect(transition.decorationPointerEvents).toEqual([
-      "none",
-      "none",
-      "none",
-      "none",
-    ]);
-    expect(transition.focusableCount).toBe(0);
-    expect(transition.height).toBeGreaterThan(0);
-    expect(transition.isolation).toBe("isolate");
-    expect(transition.lightBeamBackground).toContain("249, 95, 27");
-    expect(transition.lightBeamBackground).toMatch(
-      /(?:23, 63, 109|57, 101, 143)/,
-    );
-    expect(transition.orangeStroke).toContain("249, 95, 27");
-    expect(transition.overflow).toBe("hidden");
-    expect(transition.pointerEvents).toBe("none");
-    expect(transition.pseudoPointerEvents).toEqual(["none", "none"]);
-    expect(transition.solarFieldBackground).toContain("linear-gradient");
-    expect(transition.solarFieldBackground).toMatch(
-      /(?:23, 63, 109|57, 101, 143)/,
-    );
-    expect(transition.solarFieldBackgroundSize).not.toBe("auto");
-  }
-
-  await page.evaluate(() => {
-    document.documentElement.dataset.theme = "dark";
-  });
-  const darkPalette = await transitions.evaluateAll((elements) =>
-    elements.map((element) => ({
-      beam: getComputedStyle(
-        element.querySelector<HTMLElement>(
-          '[data-flow-decoration="light-beam"]',
-        )!,
-      ).backgroundImage,
-      blue: getComputedStyle(
-        element.querySelector<SVGPathElement>(
-          ".section-transition__trace--blue",
-        )!,
-      ).stroke,
-      field: getComputedStyle(
-        element.querySelector<HTMLElement>(
-          '[data-flow-decoration="solar-field"]',
-        )!,
-      ).backgroundImage,
-      orange: getComputedStyle(
-        element.querySelector<SVGPathElement>(
-          ".section-transition__trace--orange",
-        )!,
-      ).stroke,
-    })),
-  );
-  for (const color of darkPalette) {
-    expect(color.beam).toContain("249, 95, 27");
-    expect(color.beam).toContain("57, 101, 143");
-    expect(color.blue).toContain("57, 101, 143");
-    expect(color.field).toContain("57, 101, 143");
-    expect(color.orange).toContain("249, 95, 27");
-  }
-
+  expect(structure.map(({ identity }) => identity)).toEqual([
+    "inicio",
+    "calculadora",
+    "Resultados da Energy",
+    "solucao",
+    "solucoes",
+    "beneficios",
+    "quem-somos",
+    "processo",
+    "Comparação de abordagens",
+    "faq",
+  ]);
+  expect(structure.every(({ height }) => height > 0)).toBe(true);
+  expect(
+    structure.slice(1).every(({ gapFromPrevious }) => gapFromPrevious >= -1),
+  ).toBe(true);
+  await expect(page.locator("[data-flow-transition]")).toHaveCount(0);
+  await expect(page.locator("main.home-flow + footer.footer")).toHaveCount(1);
   await expectNoHorizontalOverflow(page);
-  await page.emulateMedia({ reducedMotion: "no-preference" });
+
   await page.setViewportSize({ width: 320, height: 900 });
   await page.goto("/");
+  await expect(page.locator("main.home-flow > section")).toHaveCount(10);
   await expectNoHorizontalOverflow(page);
 });
 
@@ -768,7 +596,10 @@ test("menu mobile abre e fecha após navegação", async ({ page }) => {
   const menu = page.locator(".menu-button");
   await menu.click();
   await expect(menu).toHaveAttribute("aria-expanded", "true");
-  await page.locator(".mobile-nav").getByRole("link", { name: "FAQ" }).focus();
+  await page
+    .locator(".mobile-nav")
+    .getByRole("link", { name: "Localização" })
+    .focus();
   await page.keyboard.press("Escape");
   await expect(menu).toHaveAttribute("aria-expanded", "false");
   await expect(menu).toBeFocused();
@@ -794,7 +625,7 @@ test("menu mobile permanece utilizável com movimento reduzido", async ({
   await expect(
     page
       .getByRole("navigation", { name: "Menu mobile" })
-      .getByRole("link", { name: "FAQ" }),
+      .getByRole("link", { name: "Localização" }),
   ).toBeVisible();
 });
 
@@ -884,27 +715,24 @@ test("prefers-reduced-motion remove parallax, stagger e movimento contínuo", as
 
 test("carrossel responde a teclado, controles e arraste", async ({ page }) => {
   await page.goto("/");
-  const carousel = page.getByRole("region", { name: "Conheça a Energy" });
+  const carousel = page.getByRole("region", { name: "Por dentro da Energy" });
   await carousel.scrollIntoViewIfNeeded();
   await carousel.focus();
   await page.keyboard.press("ArrowRight");
   await expect(
-    carousel.getByRole("heading", {
-      name: "Cada projeto começa com contexto.",
+    carousel.getByRole("button", {
+      name: /Conhecimento técnico: Tecnologia explicada com clareza., conteúdo atual/i,
     }),
-  ).toBeVisible();
+  ).toHaveAttribute("aria-current", "true");
 
-  await carousel.getByRole("button", { name: "Imagem anterior" }).click();
+  await carousel.getByRole("button", { name: "História anterior" }).click();
   await expect(
-    carousel.getByRole("heading", { name: "Estrutura real. Contato humano." }),
-  ).toBeVisible();
-  await expect(
-    carousel.getByRole("img", {
-      name: "Equipe Energy na recepção da empresa",
+    carousel.getByRole("button", {
+      name: /Planejamento: Cada projeto começa com contexto., conteúdo atual/i,
     }),
-  ).toBeVisible();
+  ).toHaveAttribute("aria-current", "true");
 
-  const slide = carousel.locator(".carousel-image-slide");
+  const slide = carousel.locator(".company-carousel-stage");
   await slide.scrollIntoViewIfNeeded();
   const box = await slide.boundingBox();
   expect(box).not.toBeNull();
@@ -917,10 +745,10 @@ test("carrossel responde a teclado, controles e arraste", async ({ page }) => {
     await page.mouse.up();
   }
   await expect(
-    carousel.getByRole("heading", {
-      name: "Cada projeto começa com contexto.",
+    carousel.getByRole("button", {
+      name: /Conhecimento técnico: Tecnologia explicada com clareza., conteúdo atual/i,
     }),
-  ).toBeVisible();
+  ).toHaveAttribute("aria-current", "true");
 });
 
 test("conteúdo essencial e navegação permanecem acessíveis sem JavaScript", async ({
@@ -936,42 +764,15 @@ test("conteúdo essencial e navegação permanecem acessíveis sem JavaScript", 
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(
     page.getByRole("navigation", { name: "Menu mobile" }).getByRole("link", {
-      name: "FAQ",
+      name: "Localização",
     }),
   ).toBeVisible();
   await expect(
     page.getByText("O sistema se paga em poucos anos"),
   ).toBeVisible();
 
-  const transitions = page.locator("[data-flow-transition]");
-  await expect(transitions).toHaveCount(12);
-  await expect(page.locator("[data-flow-decoration]")).toHaveCount(48);
-  const transitionFallback = await transitions.evaluateAll((elements) =>
-    elements.map((element) => {
-      const style = getComputedStyle(element);
-      return {
-        background: style.backgroundImage,
-        decorationPointerEvents: Array.from(
-          element.querySelectorAll<HTMLElement>("[data-flow-decoration]"),
-        ).map((decoration) => getComputedStyle(decoration).pointerEvents),
-        height: element.getBoundingClientRect().height,
-        overflow: style.overflow,
-        pointerEvents: style.pointerEvents,
-      };
-    }),
-  );
-  for (const transition of transitionFallback) {
-    expect(transition.background).toContain("linear-gradient");
-    expect(transition.decorationPointerEvents).toEqual([
-      "none",
-      "none",
-      "none",
-      "none",
-    ]);
-    expect(transition.height).toBeGreaterThan(0);
-    expect(transition.overflow).toBe("hidden");
-    expect(transition.pointerEvents).toBe("none");
-  }
+  await expect(page.locator("main.home-flow > section")).toHaveCount(10);
+  await expect(page.locator("[data-flow-transition]")).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
 
   await context.close();
@@ -1048,13 +849,13 @@ test("API aceita o payload conversacional, preserva o honeypot e não simula suc
   });
 });
 
-test("BLOG aparece após FAQ e abre a página pública", async ({ page }) => {
+test("BLOG aparece após Localização e abre a página pública", async ({ page }) => {
   await page.goto("/");
   const navigation = page.getByRole("navigation", {
     name: "Navegação principal",
   });
   const links = await navigation.getByRole("link").allTextContents();
-  expect(links.indexOf("BLOG")).toBe(links.indexOf("FAQ") + 1);
+  expect(links.indexOf("BLOG")).toBe(links.indexOf("Localização") + 1);
   await navigation.getByRole("link", { name: "BLOG" }).click();
   await expect(page).toHaveURL(/\/blog/);
   await expect(
@@ -1071,9 +872,41 @@ test("painel do blog exige autenticação", async ({ page }) => {
   await expect(
     page.getByRole("heading", { level: 1, name: "Acesso administrativo" }),
   ).toBeVisible();
+  await expect(page.getByLabel("Usuário")).toBeVisible();
+  const adminApi = await page.request.get("/api/admin/posts");
+  expect(adminApi.status()).toBe(401);
 });
 
-for (const width of [320, 360, 390, 768, 1024, 1440]) {
+test("blog mantém a busca antes do feed no mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.goto("/blog");
+  const search = await page.locator(".news-main-search").boundingBox();
+  const firstCard = await page.locator(".news-card").first().boundingBox();
+  expect(search).not.toBeNull();
+  expect(firstCard).not.toBeNull();
+  expect(search!.y).toBeLessThan(firstCard!.y);
+  await expectNoHorizontalOverflow(page);
+});
+
+test("login administrativo cabe em telas estreitas", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.goto("/admin/login");
+  await expectNoHorizontalOverflow(page);
+});
+
+test("menu de tablet substitui a navegação desktop", async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.goto("/");
+  await expect(page.locator(".desktop-nav")).toBeHidden();
+  const trigger = page.getByRole("button", { name: "Abrir menu" });
+  await expect(trigger).toBeVisible();
+  await trigger.click();
+  const menu = page.getByRole("navigation", { name: "Menu mobile" });
+  await expect(menu).toBeVisible();
+  await expect(menu).toHaveCSS("overflow-y", "auto");
+});
+
+for (const width of [280, 320, 360, 390, 768, 900, 1024, 1440]) {
   test(`não apresenta overflow horizontal em ${width}px`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.setViewportSize({ width, height: 900 });

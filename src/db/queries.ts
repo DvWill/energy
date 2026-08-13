@@ -9,6 +9,7 @@ const published = () => or(
 )!;
 const cardFields = {
   id: posts.id, title: posts.title, slug: posts.slug, summary: posts.summary,
+  sourceName: posts.sourceName, sourceUrl: posts.sourceUrl,
   coverImageUrl: posts.coverImageUrl, coverImageAlt: posts.coverImageAlt,
   coverImageWidth: posts.coverImageWidth, coverImageHeight: posts.coverImageHeight,
   publishedAt: posts.publishedAt, readingTimeMinutes: posts.readingTimeMinutes,

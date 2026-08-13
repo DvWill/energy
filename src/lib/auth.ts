@@ -12,11 +12,12 @@ function secret() {
   return new TextEncoder().encode(value);
 }
 
-export async function verifyAdminCredentials(email: string, password: string) {
-  const expectedEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+export async function verifyAdminCredentials(username: string, password: string) {
+  const expectedUsername = process.env.ADMIN_USERNAME?.trim().toLowerCase();
   const hash = process.env.ADMIN_PASSWORD_HASH;
-  if (!expectedEmail || !hash || email.trim().toLowerCase() !== expectedEmail) return false;
-  return compare(password, hash);
+  if (!expectedUsername || !hash) return false;
+  const passwordMatches = await compare(password, hash);
+  return username.trim().toLowerCase() === expectedUsername && passwordMatches;
 }
 
 export async function createAdminSession() {

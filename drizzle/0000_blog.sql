@@ -41,7 +41,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "blog_tags_slug_uidx" ON "blog_tags"("slug");
 CREATE UNIQUE INDEX IF NOT EXISTS "blog_posts_slug_uidx" ON "blog_posts"("slug");
 CREATE UNIQUE INDEX IF NOT EXISTS "blog_post_redirects_old_slug_uidx" ON "blog_post_redirects"("old_slug");
 CREATE INDEX IF NOT EXISTS "blog_posts_status_idx" ON "blog_posts"("status");
-CREATE INDEX IF NOT EXISTS "blog_posts_published_at_idx" ON "blog_posts"("published_at" DESC);
+CREATE INDEX IF NOT EXISTS "blog_posts_published_at_idx" ON "blog_posts"("published_at");
 CREATE INDEX IF NOT EXISTS "blog_posts_scheduled_at_idx" ON "blog_posts"("scheduled_at");
 CREATE INDEX IF NOT EXISTS "blog_posts_category_id_idx" ON "blog_posts"("category_id");
 CREATE INDEX IF NOT EXISTS "blog_posts_author_id_idx" ON "blog_posts"("author_id");

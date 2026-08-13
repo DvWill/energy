@@ -71,7 +71,7 @@ export default function RootLayout({
             }
             .faq-answer { overflow: visible !important; }
             .menu-button { display: none !important; }
-            @media (max-width: 850px) {
+            @media (max-width: 1100px) {
               .site-header .desktop-nav { display: none !important; }
               .site-header .mobile-nav {
                 display: flex !important;
