@@ -57,6 +57,7 @@ import {
   formatBRL,
   parseBRLCurrency,
 } from "@/lib/savings-calculator";
+import type { CalculatorSnapshot } from "@/lib/calculator-handoff";
 
 type SavingsCalculatorSectionProps = {
   monthlyBill: number;
@@ -65,6 +66,7 @@ type SavingsCalculatorSectionProps = {
   onHorizonChange: (value: AnalysisHorizon) => void;
   onCalculation: (simulation: SavingsSimulation) => void;
   onOpenChat: () => void;
+  transferredSnapshot?: CalculatorSnapshot | null;
 };
 
 function AnimatedCurrency({ value }: { value: number }) {
@@ -109,6 +111,7 @@ export function SavingsCalculatorSection({
   onHorizonChange,
   onCalculation,
   onOpenChat,
+  transferredSnapshot,
 }: SavingsCalculatorSectionProps) {
   const reduced = useAccessibleMotion();
   const finePointer = useFinePointer();
@@ -125,6 +128,8 @@ export function SavingsCalculatorSection({
   const [attempted, setAttempted] = useState(false);
   const [activeStage, setActiveStage] = useState(0);
   const [announcement, setAnnouncement] = useState("");
+  const lastTransferredSnapshot = useRef<CalculatorSnapshot | null>(null);
+  const shouldFocusTransferredResult = useRef(false);
 
   const effectiveRate = includeAdjustment ? adjustmentRate : 0;
   const annualSpend = calculateAnnualSpend(monthlyBill);
@@ -143,6 +148,31 @@ export function SavingsCalculatorSection({
     ((sliderValue - c.calculator.slider.min) /
       (c.calculator.slider.max - c.calculator.slider.min)) *
     100;
+
+  useEffect(() => {
+    if (
+      !transferredSnapshot ||
+      lastTransferredSnapshot.current === transferredSnapshot
+    ) {
+      return;
+    }
+
+    lastTransferredSnapshot.current = transferredSnapshot;
+    setInputValue(formatBRL(transferredSnapshot.monthlyBill));
+    setIncludeAdjustment(transferredSnapshot.includeAdjustment);
+    setAdjustmentRate(transferredSnapshot.adjustmentRate);
+    setAdvancedOpen(transferredSnapshot.includeAdjustment);
+    setAttempted(transferredSnapshot.showResult);
+    setHasCalculated(transferredSnapshot.showResult);
+    shouldFocusTransferredResult.current = transferredSnapshot.showResult;
+    setShowResult(transferredSnapshot.showResult);
+    setActiveStage(transferredSnapshot.showResult ? 2 : 0);
+    setAnnouncement(
+      transferredSnapshot.showResult
+        ? `${c.calculator.result.heading}: ${formatBRL(transferredSnapshot.estimatedSpendWithoutSolar)} em ${yearLabel(transferredSnapshot.analysisHorizon)}.`
+        : "",
+    );
+  }, [transferredSnapshot]);
 
   useEffect(() => {
     if (hasCalculated && validValue)
@@ -165,6 +195,10 @@ export function SavingsCalculatorSection({
   useEffect(() => {
     if (!showResult) return;
     resultRef.current?.focus({ preventScroll: true });
+    if (shouldFocusTransferredResult.current) {
+      shouldFocusTransferredResult.current = false;
+      return;
+    }
     resultRef.current?.scrollIntoView({
       behavior: reduced ? "auto" : "smooth",
       block: "start",

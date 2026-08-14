@@ -5,6 +5,8 @@ import { SolutionsSection } from "@/components/landing/solutions-section";
 import { CompanySection } from "@/components/landing/company-section";
 import { HeroSection } from "@/components/landing/hero-section";
 import { LeadExperience } from "@/components/landing/lead-experience";
+import { EntryCalculatorGate } from "@/components/landing/entry-calculator-gate";
+import { EntryGateBootstrap } from "@/components/landing/entry-gate-bootstrap";
 import { MetricsSection } from "@/components/landing/metrics-section";
 import { siteContent as c } from "@/content/landing-page";
 import {
@@ -27,29 +29,33 @@ export default function Home() {
 
   return (
     <>
+      <EntryGateBootstrap />
+      <EntryCalculatorGate />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(faqStructuredData).replace(/</g, "\\u003c"),
         }}
       />
-      <a className="skip-link" href="#conteudo">
-        Pular para o conteúdo
-      </a>
-      <SiteHeader />
-      <main id="conteudo" className="home-flow">
-        <HeroSection primaryCta={c.cta.primary} />
-        <LeadExperience />
-        <MetricsSection />
-        <ProblemSolution />
-        <SolutionsSection />
-        <Benefits />
-        <CompanySection />
-        <Process />
-        <Differentiators />
-        <FaqSection />
-      </main>
-      <SiteFooter />
+      <div data-entry-site-content>
+        <a className="skip-link" href="#conteudo">
+          Pular para o conteúdo
+        </a>
+        <SiteHeader />
+        <main id="conteudo" className="home-flow" tabIndex={-1}>
+          <HeroSection primaryCta={c.cta.primary} />
+          <LeadExperience />
+          <MetricsSection />
+          <ProblemSolution />
+          <SolutionsSection />
+          <Benefits />
+          <CompanySection />
+          <Process />
+          <Differentiators />
+          <FaqSection />
+        </main>
+        <SiteFooter />
+      </div>
     </>
   );
 }

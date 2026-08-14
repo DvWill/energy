@@ -1,5 +1,17 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
+const entryGateStorageKey = "energy-entry-calculator-seen";
+
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript((storageKey) => {
+    try {
+      window.sessionStorage.setItem(storageKey, "true");
+    } catch {
+      // Some opaque origins can reject Storage access before navigation.
+    }
+  }, entryGateStorageKey);
+});
+
 const calculatorLabels = {
   monthlyBill: "Valor médio mensal da conta de energia em reais",
   slider: "Ajustar valor médio mensal da conta de energia",
@@ -849,7 +861,9 @@ test("API aceita o payload conversacional, preserva o honeypot e não simula suc
   });
 });
 
-test("BLOG aparece após Localização e abre a página pública", async ({ page }) => {
+test("BLOG aparece após Localização e abre a página pública", async ({
+  page,
+}) => {
   await page.goto("/");
   const navigation = page.getByRole("navigation", {
     name: "Navegação principal",
