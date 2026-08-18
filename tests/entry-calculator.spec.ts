@@ -1,6 +1,6 @@
 import { expect, test, type Locator } from "@playwright/test";
 
-const storageKey = "energy-entry-calculator-seen";
+const storageKey = "energy-entry-calculator-seen-v2";
 const dialogName = "Calculadora inicial Energy";
 
 async function waitForDialog(page: import("@playwright/test").Page) {
@@ -158,7 +158,7 @@ test("repete o design completo da calculadora e libera o site após o resultado"
   }
   await expect(
     dialog.getByRole("button", { name: /Opções avançadas/ }),
-  ).toBeVisible();
+  ).toHaveCount(0);
 
   const bill = dialog.getByLabel("Qual é o valor médio da sua conta de luz?");
   await expect(bill).toBeFocused();
@@ -176,11 +176,6 @@ test("repete o design completo da calculadora e libera o site após o resultado"
 
   await bill.fill("500");
   await dialog.getByRole("button", { name: "5 anos", exact: true }).click();
-  await dialog.getByRole("button", { name: /Opções avançadas/ }).click();
-  await dialog.getByRole("checkbox", { name: "Considerar reajuste anual" }).check();
-  await dialog
-    .getByRole("spinbutton", { name: "Taxa de reajuste anual no pop-up" })
-    .fill("10");
   const calculate = dialog.getByRole("button", {
     name: "CLIQUE AQUI E VEJA O QUANTO VOCÊ PERDE",
   });
@@ -217,11 +212,7 @@ test("repete o design completo da calculadora e libera o site após o resultado"
       name: /R\$\s*36\.630,60 em 5 anos/,
     }),
   ).toBeVisible();
-  await expect(
-    siteCalculator.getByRole("spinbutton", {
-      name: "Taxa de reajuste anual em porcentagem",
-    }),
-  ).toHaveValue("10");
+  await expect(siteCalculator.getByText(/10%|reajuste/i)).toHaveCount(0);
   await expect(page.locator("[data-entry-site-content]")).not.toHaveAttribute(
     "aria-hidden",
     "true",
@@ -239,7 +230,7 @@ test("repete o design completo da calculadora e libera o site após o resultado"
   ).toHaveAttribute("aria-pressed", "true");
   await expect(
     siteCalculator.getByRole("checkbox", { name: "Considerar reajuste anual" }),
-  ).toBeChecked();
+  ).toHaveCount(0);
 
   await page.reload();
   await page.waitForTimeout(1_100);

@@ -1,5 +1,7 @@
 export type AnalysisHorizon = 1 | 5 | 10 | 25;
 
+export const FIXED_ANNUAL_ADJUSTMENT_RATE = 10;
+
 export type SavingsSimulation = {
   monthlyBill: number;
   analysisHorizon: AnalysisHorizon;
@@ -9,6 +11,16 @@ export type SavingsSimulation = {
 
 const MONTHS_PER_YEAR = 12;
 const DAYS_PER_YEAR = 365;
+
+export const SAVINGS_COMPARISON_REFERENCES = {
+  trips: [
+    { destination: "Maceió", price: 11_900, unit: "viagem em casal" },
+    { destination: "Salvador", price: 6_500, unit: "viagem em casal" },
+    { destination: "Caldas Novas", price: 3_500, unit: "viagem em casal" },
+    { destination: "uma viagem", price: 800, unit: "diária de viagem" },
+  ],
+  premiumSmartphone: 7_999,
+} as const;
 
 const brlFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -57,4 +69,43 @@ export function calculateProjectedSpend({
 
 export function calculateDailyAverage(total: number, years: AnalysisHorizon) {
   return total / (years * DAYS_PER_YEAR);
+}
+
+export function calculateSavingsComparisons(total: number) {
+  const trip =
+    SAVINGS_COMPARISON_REFERENCES.trips.find(({ price }) => total >= price) ??
+    SAVINGS_COMPARISON_REFERENCES.trips.at(-1)!;
+  const tripQuantity = Math.max(1, Math.floor(total / trip.price));
+  const smartphoneQuantity = Math.floor(
+    total / SAVINGS_COMPARISON_REFERENCES.premiumSmartphone,
+  );
+  const smartphonePercentage = Math.max(
+    1,
+    Math.min(
+      99,
+      Math.floor(
+        (total / SAVINGS_COMPARISON_REFERENCES.premiumSmartphone) * 100,
+      ),
+    ),
+  );
+  const patrimonyThousands = Math.max(1, Math.floor(total / 1_000));
+  const patrimonyPurpose =
+    total >= 20_000
+      ? "para começar a entrada de um imóvel"
+      : total >= 8_000
+        ? "para a entrada de um veículo"
+        : "para construir uma reserva financeira";
+
+  return {
+    trip: { ...trip, quantity: tripQuantity },
+    smartphone: {
+      price: SAVINGS_COMPARISON_REFERENCES.premiumSmartphone,
+      quantity: smartphoneQuantity,
+      percentage: smartphonePercentage,
+    },
+    patrimony: {
+      thousands: patrimonyThousands,
+      purpose: patrimonyPurpose,
+    },
+  };
 }

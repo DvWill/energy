@@ -13,9 +13,7 @@ import {
   ArrowRight,
   Bolt,
   Building2,
-  Calculator,
   Check,
-  ChevronDown,
   CircleDollarSign,
   Lightbulb,
   RotateCcw,
@@ -47,6 +45,7 @@ import {
   calculateAnnualSpend,
   calculateDailyAverage,
   calculateProjectedSpend,
+  FIXED_ANNUAL_ADJUSTMENT_RATE,
   formatBRL,
   parseBRLCurrency,
 } from "@/lib/savings-calculator";
@@ -56,7 +55,7 @@ import {
   publishCalculatorSnapshot,
 } from "@/lib/calculator-handoff";
 
-const STORAGE_KEY = "energy-entry-calculator-seen";
+const STORAGE_KEY = "energy-entry-calculator-seen-v2";
 const SPLASH_DURATION = 1_000;
 const ID_PREFIX = "entry-calculator";
 
@@ -130,11 +129,6 @@ export function EntryCalculatorGate() {
   const [stage, setStage] = useState<GateStage>("hidden");
   const [bill, setBill] = useState("R$ 500,00");
   const [horizon, setHorizon] = useState<AnalysisHorizon>(10);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [includeAdjustment, setIncludeAdjustment] = useState(false);
-  const [adjustmentRate, setAdjustmentRate] = useState<number>(
-    c.calculator.annualAdjustment.default,
-  );
   const [resultVisible, setResultVisible] = useState(false);
   const [activeStage, setActiveStage] = useState(0);
   const [error, setError] = useState("");
@@ -267,7 +261,7 @@ export function EntryCalculatorGate() {
   }, [stage]);
 
   const monthlyBill = parseBRLCurrency(bill);
-  const annualAdjustmentRate = includeAdjustment ? adjustmentRate : 0;
+  const annualAdjustmentRate = FIXED_ANNUAL_ADJUSTMENT_RATE;
   const projectedSpend = calculateProjectedSpend({
     monthlyBill,
     years: horizon,
@@ -289,8 +283,8 @@ export function EntryCalculatorGate() {
     const snapshot: CalculatorSnapshot = {
       monthlyBill,
       analysisHorizon: horizon,
-      includeAdjustment,
-      adjustmentRate,
+      includeAdjustment: true,
+      adjustmentRate: FIXED_ANNUAL_ADJUSTMENT_RATE,
       annualAdjustmentRate,
       estimatedSpendWithoutSolar: projectedSpend,
       showResult: resultVisible,
@@ -573,89 +567,6 @@ export function EntryCalculatorGate() {
                 </fieldset>
               </div>
 
-              <div className="savings-calculator-advanced">
-                <button
-                  className="savings-calculator-advanced-toggle"
-                  type="button"
-                  aria-expanded={advancedOpen}
-                  aria-controls={`${ID_PREFIX}-advanced-options`}
-                  onClick={() => setAdvancedOpen((current) => !current)}
-                >
-                  <span>
-                    <Calculator aria-hidden="true" />
-                    {c.calculator.advancedOptionsLabel}
-                  </span>
-                  <span className="savings-calculator-advanced-state">
-                    {includeAdjustment
-                      ? `${adjustmentRate}${c.calculator.annualAdjustment.suffix}`
-                      : c.calculator.experience.noAdjustmentLabel}
-                  </span>
-                  <ChevronDown aria-hidden="true" />
-                </button>
-                <AnimatePresence initial={false}>
-                {advancedOpen && (
-                  <motion.div
-                    id={`${ID_PREFIX}-advanced-options`}
-                    className="savings-calculator-advanced-content"
-                    initial={reduced ? false : { height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={reduced ? undefined : { height: 0, opacity: 0 }}
-                    transition={
-                      reduced
-                        ? { duration: 0 }
-                        : {
-                            duration: motionDuration.element,
-                            ease: motionEase.standard,
-                          }
-                    }
-                  >
-                    <label className="savings-calculator-switch">
-                      <input
-                        type="checkbox"
-                        checked={includeAdjustment}
-                        onChange={(event) =>
-                          setIncludeAdjustment(event.target.checked)
-                        }
-                      />
-                      <span aria-hidden="true" />
-                      <strong>
-                        {c.calculator.annualAdjustment.toggleLabel}
-                      </strong>
-                    </label>
-                    <p>{c.calculator.annualAdjustment.description}</p>
-                    {includeAdjustment && (
-                      <label className="savings-calculator-rate">
-                        <span>{c.calculator.annualAdjustment.rateLabel}</span>
-                        <span>
-                          <input
-                            type="number"
-                            min={c.calculator.annualAdjustment.min}
-                            max={c.calculator.annualAdjustment.max}
-                            step={c.calculator.annualAdjustment.step}
-                            value={adjustmentRate}
-                            aria-label="Taxa de reajuste anual no pop-up"
-                            onChange={(event) => {
-                              const value = Number(event.target.value);
-                              setAdjustmentRate(
-                                Math.min(
-                                  c.calculator.annualAdjustment.max,
-                                  Math.max(
-                                    c.calculator.annualAdjustment.min,
-                                    Number.isFinite(value) ? value : 0,
-                                  ),
-                                ),
-                              );
-                            }}
-                          />
-                          <small>{c.calculator.annualAdjustment.suffix}</small>
-                        </span>
-                      </label>
-                    )}
-                  </motion.div>
-                )}
-                </AnimatePresence>
-              </div>
-
               <div className="savings-calculator-action">
                 <div aria-hidden="true">
                   <ShieldCheck />
@@ -709,10 +620,6 @@ export function EntryCalculatorGate() {
                   {formatBRL(monthlyBill)} / mês
                   <i aria-hidden="true" />
                   {yearLabel(horizon)}
-                  <i aria-hidden="true" />
-                  {includeAdjustment
-                    ? `reajuste de ${adjustmentRate}% a.a.`
-                    : "sem reajuste"}
                 </span>
                 <button type="button" onClick={reset}>
                   <RotateCcw aria-hidden="true" /> Ajustar simulação

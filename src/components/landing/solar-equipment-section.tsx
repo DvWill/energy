@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowLeft, ArrowRight, ArrowUpRight, RotateCcw } from "lucide-react";
-import { AnimatePresence, motion, type PanInfo } from "motion/react";
-import { useState } from "react";
+import { ArrowUpRight, CheckCircle2, MousePointerClick } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Container } from "@/components/ui/container";
 import { useAccessibleMotion } from "@/hooks/use-accessible-motion";
 import { openLeadChat } from "@/lib/chat-events";
@@ -81,22 +81,57 @@ const equipment: Equipment[] = [
 
 export function SolarEquipmentSection() {
   const [selected, setSelected] = useState<number | null>(null);
-  const [tab, setTab] = useState(0);
-  const [start, setStart] = useState(0);
   const reduced = useAccessibleMotion();
+  const gridRef = useRef<HTMLDivElement>(null);
+  const detailRef = useRef<HTMLDivElement>(null);
   const current = selected === null ? null : equipment[selected];
 
-  const selectProduct = (index: number) => { setSelected(index); setTab(0); };
-  const shift = (delta: number) => setStart((value) => (value + delta + equipment.length) % equipment.length);
-  const finishDrag = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    if (info.offset.x < -55) shift(1);
-    if (info.offset.x > 55) shift(-1);
+  const closeDetails = useCallback(() => {
+    setSelected(null);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const bounds = gridRef.current?.getBoundingClientRect();
+        if (!bounds || (bounds.top >= 0 && bounds.bottom <= window.innerHeight)) return;
+        gridRef.current?.scrollIntoView({
+          behavior: reduced ? "auto" : "smooth",
+          block: "nearest",
+        });
+      });
+    });
+  }, [reduced]);
+
+  const selectProduct = (index: number) => {
+    if (selected === index) {
+      closeDetails();
+      return;
+    }
+    setSelected(index);
   };
-  const visible = Array.from({ length: equipment.length }, (_, i) => (start + i) % equipment.length)
-    .filter((index) => index !== selected);
+
+  useEffect(() => {
+    if (selected === null || !detailRef.current) return;
+    const frame = requestAnimationFrame(() => {
+      const bounds = detailRef.current?.getBoundingClientRect();
+      if (!bounds || (bounds.top >= 0 && bounds.bottom <= window.innerHeight)) return;
+      detailRef.current?.scrollIntoView({
+        behavior: reduced ? "auto" : "smooth",
+        block: "nearest",
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [reduced, selected]);
+
+  useEffect(() => {
+    if (selected === null) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeDetails();
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [closeDetails, selected]);
 
   return (
-    <section id="solucao" className="section equipment-section" aria-labelledby="equipment-title">
+    <section id="equipamentos" className="section equipment-section" aria-labelledby="equipment-title">
       <Container>
         <header className="equipment-heading">
           <span>TECNOLOGIA QUE GERA ECONOMIA</span>
@@ -104,43 +139,68 @@ export function SolarEquipmentSection() {
           <p>Cada componente possui uma função essencial para transformar a luz do sol em energia segura, eficiente e econômica.</p>
         </header>
 
+        <motion.div ref={gridRef} initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} className="equipment-grid">
+          {equipment.map((product, index) => (
+            <EquipmentCard
+              product={product}
+              index={index}
+              selected={selected === index}
+              onSelect={selectProduct}
+              key={product.number}
+            />
+          ))}
+        </motion.div>
+
+        {selected === null && (
+          <div className="equipment-discovery-hint">
+            <span><MousePointerClick aria-hidden="true" /> Clique em um equipamento para conhecer todos os detalhes</span>
+            <i aria-hidden="true" />
+          </div>
+        )}
+
         <AnimatePresence mode="wait" initial={false}>
-          {current ? (
-            <motion.div className="equipment-focus" key={current.number} initial={reduced ? false : { opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} exit={reduced ? undefined : { opacity: 0, y: -16 }} transition={{ duration: reduced ? 0 : 0.5 }}>
-              <div className="equipment-focus-copy">
+          {current && (
+            <motion.div
+              ref={detailRef}
+              className="equipment-detail-panel"
+              key={current.number}
+              initial={reduced ? false : { opacity: 0, height: 0, y: 18 }}
+              animate={{ opacity: 1, height: "auto", y: 0 }}
+              exit={reduced ? undefined : { opacity: 0, height: 0, y: -10 }}
+              transition={{ duration: reduced ? 0 : 0.42 }}
+            >
+              <button
+                type="button"
+                className="equipment-detail-close"
+                aria-label="Fechar detalhes do equipamento"
+                onClick={closeDetails}
+              >
+                Fechar detalhes <span aria-hidden="true">×</span>
+              </button>
+              <div className="equipment-detail-copy">
                 <span>{current.number} / EQUIPAMENTO</span>
                 <h3>{current.name}</h3>
-                <div className="equipment-mobile-product"><ProductImage product={current} priority /></div>
                 <p>{current.summary}</p>
-                <div className="equipment-tabs" role="tablist" aria-label={`Informações sobre ${current.name}`}>
-                  {current.tabs.map((item, index) => <button type="button" role="tab" aria-selected={tab === index} className={tab === index ? "active" : ""} onClick={() => setTab(index)} key={item.label}>{item.label}</button>)}
+                <div className="equipment-detail-tags">
+                  {(current.metrics ?? current.tabs.flatMap((item) => item.items)).slice(0, 3).map((item) => <span key={item}>{item}</span>)}
                 </div>
-                <div className="equipment-tab-panel" role="tabpanel"><ul>{current.tabs[tab].items.map((item) => <li key={item}>{item}</li>)}</ul></div>
-                {current.note && <p className="equipment-note">{current.note}</p>}
-                {current.metrics && <div className="equipment-metrics">{current.metrics.map((item) => <span key={item}>{item}</span>)}</div>}
-                <button type="button" className="button equipment-cta" onClick={openLeadChat}>Solicite seu projeto solar <ArrowUpRight aria-hidden="true" /></button>
+                <div className="equipment-detail-benefits">
+                  {current.tabs[0].items.slice(0, 4).map((item) => (
+                    <div key={item}><CheckCircle2 aria-hidden="true" /><span>{item}</span></div>
+                  ))}
+                </div>
+                {current.note && <p className="equipment-detail-note">{current.note}</p>}
+                <button type="button" className="button equipment-detail-cta" onClick={openLeadChat}>Solicite seu projeto solar <ArrowUpRight aria-hidden="true" /></button>
               </div>
-              <div className="equipment-desktop-product"><ProductImage product={current} priority /></div>
-            </motion.div>
-          ) : (
-            <motion.div key="all" initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} className="equipment-grid">
-              {equipment.map((product, index) => <EquipmentCard product={product} index={index} onSelect={selectProduct} key={product.number} />)}
+              <div className="equipment-detail-visual">
+                <ProductImage product={current} priority />
+                {(current.metrics ?? current.tabs.map((item) => item.label)).slice(0, 2).map((item, index) => (
+                  <span className={`equipment-detail-callout equipment-detail-callout-${index + 1}`} key={item}>{item}</span>
+                ))}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
-
-        {current && <button type="button" className="equipment-reset" onClick={() => setSelected(null)}><RotateCcw aria-hidden="true" /> Ver todos os equipamentos</button>}
-
-        <div className={`equipment-carousel ${current ? "is-visible" : ""}`} aria-label="Outros equipamentos" onKeyDown={(event) => { if (event.key === "ArrowLeft") shift(-1); if (event.key === "ArrowRight") shift(1); }} tabIndex={current ? 0 : -1}>
-          {current && <>
-            <button type="button" className="equipment-arrow prev" aria-label="Equipamentos anteriores" onClick={() => shift(-1)}><ArrowLeft aria-hidden="true" /></button>
-            <motion.div className="equipment-carousel-track" drag={reduced ? false : "x"} dragConstraints={{ left: 0, right: 0 }} dragElastic={0.08} onDragEnd={finishDrag}>
-              {visible.map((index) => <EquipmentCard product={equipment[index]} index={index} onSelect={selectProduct} compact key={equipment[index].number} />)}
-            </motion.div>
-            <button type="button" className="equipment-arrow next" aria-label="Próximos equipamentos" onClick={() => shift(1)}><ArrowRight aria-hidden="true" /></button>
-          </>}
-        </div>
-        <div className="equipment-dots" aria-hidden="true">{equipment.map((item, index) => <span className={selected === index ? "active" : ""} key={item.number} />)}</div>
       </Container>
     </section>
   );
@@ -150,10 +210,11 @@ function ProductImage({ product, priority = false }: { product: Equipment; prior
   return <div className="equipment-product"><span className="equipment-orbit" aria-hidden="true" /><Image src={withBasePath(product.image)} alt={product.alt} fill priority={priority} loading={priority ? "eager" : "lazy"} sizes="(max-width: 760px) 88vw, 45vw" /></div>;
 }
 
-function EquipmentCard({ product, index, onSelect, compact = false }: { product: Equipment; index: number; onSelect: (index: number) => void; compact?: boolean }) {
-  return <button type="button" className={`equipment-card ${compact ? "compact" : ""}`} onClick={() => onSelect(index)} aria-label={`Conheça o equipamento ${product.name}`}>
+function EquipmentCard({ product, index, selected, onSelect }: { product: Equipment; index: number; selected: boolean; onSelect: (index: number) => void }) {
+  return <button type="button" className="equipment-card" data-selected={selected ? "true" : "false"} aria-pressed={selected} onClick={() => onSelect(index)} aria-label={`Conheça o equipamento ${product.name}`}>
     <span className="equipment-card-number">{product.number}</span>
-    <span className="equipment-card-media"><Image src={withBasePath(product.image)} alt="" fill priority={!compact && index === 0} loading={!compact && index === 0 ? "eager" : "lazy"} sizes={compact ? "280px" : "(max-width: 760px) 78vw, 25vw"} /></span>
+    {selected && <span className="equipment-card-selected"><i aria-hidden="true" />Selecionado</span>}
+    <span className="equipment-card-media"><Image src={withBasePath(product.image)} alt="" fill priority={index === 0} loading={index === 0 ? "eager" : "lazy"} sizes="(max-width: 760px) 78vw, 25vw" /></span>
     <strong>{product.name}</strong><span className="equipment-card-short">{product.short}</span><span className="equipment-card-link">Conheça o equipamento <ArrowUpRight aria-hidden="true" /></span>
   </button>;
 }

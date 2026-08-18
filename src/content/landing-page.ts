@@ -19,6 +19,7 @@ export const siteContent = {
   },
   navigation: [
     { label: "Calculadora", href: "/#calculadora" },
+    { label: "Equipamentos", href: "/#equipamentos" },
     { label: "Soluções", href: "/#solucoes" },
     { label: "Quem somos", href: "/#quem-somos" },
     { label: "Processo", href: "/#processo" },

@@ -1,9 +1,11 @@
-import { Fragment } from "react";
 import {
   Check,
   CircleGauge,
   ClipboardCheck,
+  Flag,
   MessagesSquare,
+  Minus,
+  Scale,
   Sparkles,
   Target,
 } from "lucide-react";
@@ -17,11 +19,11 @@ import {
   Reveal,
   StaggerGrid,
   StaggerList,
-  StaggerRows,
   TextReveal,
 } from "@/components/motion/motion-primitives";
 import { SolarEquipmentSection } from "@/components/landing/solar-equipment-section";
 const icons = [Target, ClipboardCheck, MessagesSquare, Sparkles];
+const criteriaIcons = [Flag, MessagesSquare, Scale];
 export function Trust() {
   return (
     <section className="trust" aria-label="Informações comerciais a confirmar">
@@ -102,30 +104,45 @@ export function Process() {
 }
 export function Differentiators() {
   return (
-    <section className="section">
+    <section className="section criteria-section">
       <Container>
-        <div className="section-heading motion-heading landing-section-heading">
+        <div className="section-heading motion-heading landing-section-heading criteria-heading">
           <EyebrowReveal>FORMA DE TRABALHAR</EyebrowReveal>
           <TextReveal
             lines={[{ content: "Critérios que facilitam uma boa decisão." }]}
           />
-          <LineReveal />
         </div>
-        <StaggerRows
-          label="Comparação de abordagens"
-          headers={["Critério", "Abordagem comum", "Abordagem Energy"]}
-          rows={c.differentiators.map((item) => ({
-            key: item.label,
-            cells: [
-              item.label,
-              item.traditional,
-              <Fragment key={`${item.label}-energy`}>
-                <Check aria-hidden="true" />
-                {item.energy}
-              </Fragment>,
-            ],
-          }))}
-        />
+        <StaggerGrid className="criteria-grid">
+          {c.differentiators.map((item, index) => {
+            const Icon = criteriaIcons[index];
+            return (
+              <article className="criteria-card" key={item.label}>
+                <Icon className="criteria-card-icon" aria-hidden="true" />
+                <h3>{item.label}</h3>
+                <div className="criteria-card-comparisons">
+                  <div className="criteria-approach criteria-approach-common">
+                    <span className="criteria-approach-icon" aria-hidden="true">
+                      <Minus />
+                    </span>
+                    <div>
+                      <span>ABORDAGEM COMUM</span>
+                      <p>{item.traditional}</p>
+                    </div>
+                  </div>
+                  <div className="criteria-approach criteria-approach-energy">
+                    <span className="criteria-approach-icon" aria-hidden="true">
+                      <Check />
+                    </span>
+                    <div>
+                      <span>ABORDAGEM ENERGY</span>
+                      <p>{item.energy}</p>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </StaggerGrid>
       </Container>
     </section>
   );

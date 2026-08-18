@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-const entryGateStorageKey = "energy-entry-calculator-seen";
+const entryGateStorageKey = "energy-entry-calculator-seen-v2";
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript((storageKey) => {
@@ -288,7 +288,7 @@ test("calculadora é a segunda seção e está disponível na navegação", asyn
   ).toBeVisible();
 });
 
-test("calcula e revela a projeção sem reajuste em moeda brasileira", async ({
+test("calcula e revela a projeção com reajuste interno em moeda brasileira", async ({
   page,
 }) => {
   await page.goto("/");
@@ -298,57 +298,45 @@ test("calcula e revela a projeção sem reajuste em moeda brasileira", async ({
   ).toHaveCount(0);
 
   const result = await revealCalculatorResult(page);
-  await expect(result.getByRole("heading", { level: 3 })).toContainText(
-    currencyPattern(60_000),
+  await expect(result.locator(".savings-result-total")).toContainText(
+    currencyPattern(73_261.2),
   );
   await expect(
     result
       .locator("dl > div")
-      .filter({ hasText: "Gasto aproximado em 12 meses" })
+      .filter({ hasText: "Em 12 meses" })
       .locator("dd"),
   ).toHaveText(currencyPattern(12_000));
   await expect(
     result
       .locator("dl > div")
-      .filter({ hasText: "Gasto no período escolhido" })
+      .filter({ hasText: "No período escolhido" })
       .locator("dd"),
-  ).toHaveText(currencyPattern(60_000));
+  ).toHaveText(currencyPattern(73_261.2));
   await expect(
     result
       .locator("dl > div")
-      .filter({ hasText: "Média aproximada por dia" })
+      .filter({ hasText: "Por dia" })
       .locator("dd"),
-  ).toHaveText(currencyPattern(32.88));
-  await expect(result).toContainText("Dinheiro pago à distribuidora");
-  await expect(result).toContainText(
-    "Possibilidade de investir na própria geração",
-  );
+  ).toHaveText(currencyPattern(40.14));
+  await expect(result).toContainText("Esse dinheiro poderia ter virado");
+  await expect(result).toContainText("Enquanto você adia, a conta continua chegando");
 });
 
-test("aplica reajuste composto e trata taxa zero sem divisão inválida", async ({
-  page,
-}) => {
+test("mantém o reajuste de 10% oculto do cliente", async ({ page }) => {
   await page.goto("/");
   const calculator = await configureCalculator(page, 1_000, 5);
-  await calculator.getByRole("button", { name: "Opções avançadas" }).click();
-  await calculator
-    .getByRole("checkbox", { name: "Considerar reajuste anual" })
-    .check();
-  const rate = calculator.getByRole("spinbutton", {
-    name: "Taxa de reajuste anual em porcentagem",
-  });
-  await rate.fill("10");
+  await expect(
+    calculator.getByRole("button", { name: "Opções avançadas" }),
+  ).toHaveCount(0);
 
   const result = await revealCalculatorResult(page);
   const periodSpend = result
     .locator("dl > div")
-    .filter({ hasText: "Gasto no período escolhido" })
+    .filter({ hasText: "No período escolhido" })
     .locator("dd");
   await expect(periodSpend).toHaveText(currencyPattern(73_261.2));
-
-  await rate.fill("0");
-  await expect(periodSpend).toHaveText(currencyPattern(60_000));
-  await expect(result).not.toContainText(/NaN|Infinity/);
+  await expect(result).not.toContainText(/10%|reajuste|NaN|Infinity/i);
 });
 
 test("slider monetário permanece sincronizado e permite trocar o período", async ({
@@ -602,9 +590,6 @@ test("chat valida todas as etapas, corrige respostas e envia o payload esperado"
 test("menu mobile abre e fecha após navegação", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  await expect(
-    page.getByRole("button", { name: /Ativar modo (claro|escuro)/ }),
-  ).toBeVisible();
   const menu = page.locator(".menu-button");
   await menu.click();
   await expect(menu).toHaveAttribute("aria-expanded", "true");
@@ -641,26 +626,23 @@ test("menu mobile permanece utilizável com movimento reduzido", async ({
   ).toBeVisible();
 });
 
-test("alterna o tema e preserva a escolha após recarregar", async ({
-  page,
-}) => {
+test("mantém apenas o tema claro, independentemente do sistema", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "dark" });
+  await page.addInitScript(() => localStorage.setItem("energy-theme", "dark"));
   await page.goto("/");
 
   const root = page.locator("html");
-  await expect(root).toHaveAttribute("data-theme", "dark");
-  await expect(page.locator("body")).toHaveCSS(
-    "background-color",
-    "rgb(6, 21, 34)",
-  );
-
-  await page.getByRole("button", { name: "Ativar modo claro" }).click();
   await expect(root).toHaveAttribute("data-theme", "light");
+  await expect(root).toHaveCSS("color-scheme", "light");
+  await expect(
+    page.getByRole("button", { name: /Ativar modo (claro|escuro)/ }),
+  ).toHaveCount(0);
 
   await page.reload();
   await expect(root).toHaveAttribute("data-theme", "light");
-  await page.getByRole("button", { name: "Ativar modo escuro" }).click();
-  await expect(root).toHaveAttribute("data-theme", "dark");
+  await expect(
+    page.getByRole("button", { name: /Ativar modo (claro|escuro)/ }),
+  ).toHaveCount(0);
 });
 
 test("prefers-reduced-motion remove parallax, stagger e movimento contínuo", async ({

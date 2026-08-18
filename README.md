@@ -28,7 +28,7 @@ A camada de movimento da interface usa `motion`. Curvas, durações, variantes e
 
 ## Temas
 
-O seletor no header alterna entre os modos claro e escuro. Na primeira visita, o site acompanha `prefers-color-scheme`; depois, a escolha é preservada no navegador pela chave `energy-theme`. O tema é aplicado antes da hidratação para evitar mudança visual durante o carregamento.
+O site utiliza exclusivamente o modo claro, independentemente da preferência de tema configurada no navegador ou no sistema operacional.
 
 ## Integração de leads
 

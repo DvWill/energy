@@ -12,7 +12,6 @@ const geist = Geist({
 const url = (
   process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
 ).replace(/\/$/, "");
-const themeScript = `(function(){try{var saved=localStorage.getItem("energy-theme");var theme=saved==="light"||saved==="dark"?saved:(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");var root=document.documentElement;root.dataset.theme=theme;root.style.colorScheme=theme;}catch(e){}})();`;
 export const metadata: Metadata = {
   metadataBase: new URL(url),
   title: c.seo.title,
@@ -37,7 +36,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#061522",
+  themeColor: "#f95f1b",
 };
 export default function RootLayout({
   children,
@@ -48,12 +47,11 @@ export default function RootLayout({
     <html
       lang="pt-BR"
       className={geist.variable}
+      data-theme="light"
       data-scroll-behavior="smooth"
+      style={{ colorScheme: "light" }}
       suppressHydrationWarning
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-      </head>
       <body>
         <noscript>
           <style>{`

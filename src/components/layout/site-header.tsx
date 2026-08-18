@@ -6,7 +6,6 @@ import { AnimatePresence, motion } from "motion/react";
 import { usePathname } from "next/navigation";
 import { ScrollProgress } from "@/components/motion/motion-primitives";
 import { Brand } from "@/components/ui/brand";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { siteContent as c } from "@/content/landing-page";
 import {
   useAccessibleMotion,
@@ -65,7 +64,13 @@ export function SiteHeader() {
     let frame = 0;
     const updateActiveSection = () => {
       frame = 0;
-      const readingLine = Math.min(180, window.innerHeight * 0.22);
+      const headerBottom =
+        document.querySelector<HTMLElement>(".site-header .nav-wrap")
+          ?.getBoundingClientRect().bottom ?? 0;
+      const readingLine = Math.max(
+        headerBottom + 12,
+        window.innerHeight * 0.3,
+      );
       const current = sections.find((section) => {
         const rect = section.getBoundingClientRect();
         return rect.top <= readingLine && rect.bottom > readingLine;
@@ -122,7 +127,10 @@ export function SiteHeader() {
             key={item.href}
             href={resolveHref(item.href)}
             tabIndex={mobile && hydrated && !open ? -1 : undefined}
-            onClick={() => setOpen(false)}
+            onClick={() => {
+              setOpen(false);
+              if (pathname === "/" && sectionId) setActiveId(sectionId);
+            }}
             whileHover={
               finePointer && !reduced ? { x: 2, transition: microTransition } : undefined
             }
@@ -174,7 +182,6 @@ export function SiteHeader() {
           {links()}
         </nav>
         <div className="header-actions">
-          <ThemeToggle />
           <button
             ref={menuButtonRef}
             className="menu-button"

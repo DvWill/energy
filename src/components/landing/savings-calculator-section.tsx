@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
   type FormEvent,
   type PointerEvent,
@@ -11,12 +12,10 @@ import {
   Activity,
   ArrowRight,
   Bolt,
-  Building2,
   Calculator,
   Check,
-  ChevronDown,
   CircleDollarSign,
-  Lightbulb,
+  CircleAlert,
   ShieldCheck,
   Sparkles,
   TimerReset,
@@ -54,10 +53,13 @@ import {
   calculateAnnualSpend,
   calculateDailyAverage,
   calculateProjectedSpend,
+  calculateSavingsComparisons,
+  FIXED_ANNUAL_ADJUSTMENT_RATE,
   formatBRL,
   parseBRLCurrency,
 } from "@/lib/savings-calculator";
 import type { CalculatorSnapshot } from "@/lib/calculator-handoff";
+import { withBasePath } from "@/lib/base-path";
 
 type SavingsCalculatorSectionProps = {
   monthlyBill: number;
@@ -96,6 +98,45 @@ function AnimatedCurrency({ value }: { value: number }) {
   );
 }
 
+function ComparisonCard({
+  image,
+  alt,
+  eyebrow,
+  value,
+  description,
+  reference,
+  featured = false,
+}: {
+  image: string;
+  alt: string;
+  eyebrow: string;
+  value: string;
+  description: string;
+  reference: string;
+  featured?: boolean;
+}) {
+  return (
+    <article
+      className={`savings-result-comparison-card${featured ? " is-featured" : ""}`}
+    >
+      <div className="savings-result-comparison-image">
+        <Image
+          src={withBasePath(image)}
+          alt={alt}
+          fill
+          sizes="(max-width: 760px) 90vw, 28vw"
+        />
+      </div>
+      <div>
+        <span>{eyebrow}</span>
+        <strong>{value}</strong>
+        <p>{description}</p>
+        <small>{reference}</small>
+      </div>
+    </article>
+  );
+}
+
 function yearLabel(years: AnalysisHorizon) {
   return `${years} ${
     years === 1
@@ -118,11 +159,6 @@ export function SavingsCalculatorSection({
   const inputRef = useRef<HTMLInputElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
   const [inputValue, setInputValue] = useState(formatBRL(monthlyBill));
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [includeAdjustment, setIncludeAdjustment] = useState(false);
-  const [adjustmentRate, setAdjustmentRate] = useState<number>(
-    c.calculator.annualAdjustment.default,
-  );
   const [hasCalculated, setHasCalculated] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const [attempted, setAttempted] = useState(false);
@@ -131,7 +167,7 @@ export function SavingsCalculatorSection({
   const lastTransferredSnapshot = useRef<CalculatorSnapshot | null>(null);
   const shouldFocusTransferredResult = useRef(false);
 
-  const effectiveRate = includeAdjustment ? adjustmentRate : 0;
+  const effectiveRate = FIXED_ANNUAL_ADJUSTMENT_RATE;
   const annualSpend = calculateAnnualSpend(monthlyBill);
   const projectedSpend = calculateProjectedSpend({
     monthlyBill,
@@ -139,6 +175,7 @@ export function SavingsCalculatorSection({
     annualAdjustmentRate: effectiveRate,
   });
   const dailyAverage = calculateDailyAverage(projectedSpend, horizon);
+  const comparisons = calculateSavingsComparisons(projectedSpend);
   const validValue = monthlyBill > 0;
   const sliderValue = Math.min(
     c.calculator.slider.max,
@@ -159,9 +196,6 @@ export function SavingsCalculatorSection({
 
     lastTransferredSnapshot.current = transferredSnapshot;
     setInputValue(formatBRL(transferredSnapshot.monthlyBill));
-    setIncludeAdjustment(transferredSnapshot.includeAdjustment);
-    setAdjustmentRate(transferredSnapshot.adjustmentRate);
-    setAdvancedOpen(transferredSnapshot.includeAdjustment);
     setAttempted(transferredSnapshot.showResult);
     setHasCalculated(transferredSnapshot.showResult);
     shouldFocusTransferredResult.current = transferredSnapshot.showResult;
@@ -295,7 +329,11 @@ export function SavingsCalculatorSection({
                 </span>
                 <div>
                   <small>{c.calculator.experience.label}</small>
-                  <strong>{c.calculator.experience.title}</strong>
+                  <strong>
+                    {showResult
+                      ? "Veja o que essa conta pode tirar dos seus planos"
+                      : c.calculator.experience.title}
+                  </strong>
                 </div>
               </div>
               <div
@@ -486,96 +524,7 @@ export function SavingsCalculatorSection({
                     </fieldset>
                   </div>
 
-                  <div className="savings-calculator-advanced">
-                    <button
-                      className="savings-calculator-advanced-toggle"
-                      type="button"
-                      aria-expanded={advancedOpen}
-                      aria-controls="calculator-advanced-options"
-                      onClick={() => setAdvancedOpen((current) => !current)}
-                    >
-                      <span>
-                        <Calculator aria-hidden="true" />
-                        {c.calculator.advancedOptionsLabel}
-                      </span>
-                      <span className="savings-calculator-advanced-state">
-                        {includeAdjustment
-                          ? `${adjustmentRate}${c.calculator.annualAdjustment.suffix}`
-                          : c.calculator.experience.noAdjustmentLabel}
-                      </span>
-                      <ChevronDown aria-hidden="true" />
-                    </button>
-                    <AnimatePresence initial={false}>
-                      {advancedOpen && (
-                        <motion.div
-                          id="calculator-advanced-options"
-                          className="savings-calculator-advanced-content"
-                          initial={reduced ? false : { height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={reduced ? undefined : { height: 0, opacity: 0 }}
-                          transition={
-                            reduced
-                              ? { duration: 0 }
-                              : {
-                                  duration: motionDuration.element,
-                                  ease: motionEase.standard,
-                                }
-                          }
-                        >
-                          <label className="savings-calculator-switch">
-                            <input
-                              type="checkbox"
-                              checked={includeAdjustment}
-                              onChange={(event) =>
-                                setIncludeAdjustment(event.target.checked)
-                              }
-                            />
-                            <span aria-hidden="true" />
-                            <strong>
-                              {c.calculator.annualAdjustment.toggleLabel}
-                            </strong>
-                          </label>
-                          <p>{c.calculator.annualAdjustment.description}</p>
-                          {includeAdjustment && (
-                            <label className="savings-calculator-rate">
-                              <span>
-                                {c.calculator.annualAdjustment.rateLabel}
-                              </span>
-                              <span>
-                                <input
-                                  type="number"
-                                  min={c.calculator.annualAdjustment.min}
-                                  max={c.calculator.annualAdjustment.max}
-                                  step={c.calculator.annualAdjustment.step}
-                                  value={adjustmentRate}
-                                  aria-label={
-                                    c.calculator.annualAdjustment.rateAriaLabel
-                                  }
-                                  onChange={(event) => {
-                                    const value = Number(event.target.value);
-                                    setAdjustmentRate(
-                                      Math.min(
-                                        c.calculator.annualAdjustment.max,
-                                        Math.max(
-                                          c.calculator.annualAdjustment.min,
-                                          Number.isFinite(value) ? value : 0,
-                                        ),
-                                      ),
-                                    );
-                                  }}
-                                />
-                                <small>
-                                  {c.calculator.annualAdjustment.suffix}
-                                </small>
-                              </span>
-                            </label>
-                          )}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  <div className="savings-calculator-action">
+              <div className="savings-calculator-action">
                     <div aria-hidden="true">
                       <ShieldCheck />
                       <span>
@@ -627,128 +576,84 @@ export function SavingsCalculatorSection({
                     {formatBRL(monthlyBill)} {c.calculator.experience.monthlySuffix}
                       <i aria-hidden="true" />
                       {yearLabel(horizon)}
-                      <i aria-hidden="true" />
-                    {includeAdjustment
-                      ? `${c.calculator.experience.adjustmentSummaryPrefix} ${adjustmentRate}% ${c.calculator.experience.adjustmentSummarySuffix}`
-                      : c.calculator.experience.noAdjustmentLabel.toLowerCase()}
                     </span>
                     <button type="button" onClick={editSimulation}>
                       <Calculator aria-hidden="true" />
                       {c.calculator.result.editCta}
                     </button>
                   </div>
-                  {includeAdjustment && (
-                    <label className="savings-calculator-result-rate">
-                      <span>{c.calculator.annualAdjustment.rateLabel}</span>
-                      <span>
-                        <input
-                          type="number"
-                          min={c.calculator.annualAdjustment.min}
-                          max={c.calculator.annualAdjustment.max}
-                          step={c.calculator.annualAdjustment.step}
-                          value={adjustmentRate}
-                          aria-label={
-                            c.calculator.annualAdjustment.rateAriaLabel
-                          }
-                          onChange={(event) => {
-                            const value = Number(event.target.value);
-                            setAdjustmentRate(
-                              Math.min(
-                                c.calculator.annualAdjustment.max,
-                                Math.max(
-                                  c.calculator.annualAdjustment.min,
-                                  Number.isFinite(value) ? value : 0,
-                                ),
-                              ),
-                            );
-                          }}
-                        />
-                        <small>{c.calculator.annualAdjustment.suffix}</small>
-                      </span>
-                    </label>
-                  )}
-                  <div className="savings-calculator-result-heading">
-                    <span aria-hidden="true">
-                      <Bolt />
-                    </span>
-                    <div>
-                      <small>{c.calculator.result.heading}</small>
-                      <p>{c.calculator.result.intro}</p>
-                    </div>
+                  <div className="savings-result-impact-heading">
+                    <span>O PREÇO DE CONTINUAR ESPERANDO</span>
+                    <h2 id="calculator-result-title">
+                      Você não perdeu só dinheiro. Perdeu possibilidades.
+                    </h2>
+                    <p>
+                      Mantendo uma conta de {formatBRL(monthlyBill)}, você poderá
+                      pagar aproximadamente:
+                    </p>
                   </div>
                   <h3
-                    id="calculator-result-title"
+                    className="savings-result-total"
                     aria-label={`${formatBRL(projectedSpend)} em ${yearLabel(horizon)}`}
                   >
                     <AnimatedCurrency value={projectedSpend} />
-                    <small> em {yearLabel(horizon)}</small>
+                    <small>em {yearLabel(horizon)}</small>
                   </h3>
 
                   <dl className="savings-calculator-metrics">
                     <div>
-                      <dt>{c.calculator.result.annualSpendLabel}</dt>
+                      <dt>Em 12 meses</dt>
                       <dd>{formatBRL(annualSpend)}</dd>
                     </div>
                     <div>
-                      <dt>{c.calculator.result.periodSpendLabel}</dt>
+                      <dt>No período escolhido</dt>
                       <dd>{formatBRL(projectedSpend)}</dd>
                     </div>
                     <div>
-                      <dt>{c.calculator.result.dailyAverageLabel}</dt>
+                      <dt>Por dia</dt>
                       <dd>{formatBRL(dailyAverage)}</dd>
                     </div>
                   </dl>
 
-                  <div className="savings-calculator-comparison">
-                    <strong>{c.calculator.result.comparisonTitle}</strong>
-                    <div className="savings-calculator-destinations">
-                      <motion.div
-                        initial={reduced ? false : { opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={
-                          reduced
-                            ? { duration: 0 }
-                            : {
-                                delay: 0.12,
-                                duration: motionDuration.element,
-                                ease: motionEase.standard,
-                              }
-                        }
-                      >
-                        <span className="savings-calculator-comparison-icon is-distributor">
-                          <Building2 aria-hidden="true" />
-                        </span>
-                        <span>
-                          <small>{c.calculator.result.distributorLabel}</small>
-                          <strong>{formatBRL(projectedSpend)}</strong>
-                        </span>
-                      </motion.div>
-                      <motion.div
-                        initial={reduced ? false : { opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={
-                          reduced
-                            ? { duration: 0 }
-                            : {
-                                delay: 0.2,
-                                duration: motionDuration.element,
-                                ease: motionEase.standard,
-                              }
-                        }
-                      >
-                        <span className="savings-calculator-comparison-icon is-generation">
-                          <Lightbulb aria-hidden="true" />
-                        </span>
-                        <span>
-                          <small>
-                            {c.calculator.result.ownGenerationLabel}
-                          </small>
-                          <strong>
-                            {c.calculator.result.ownGenerationValue}
-                          </strong>
-                        </span>
-                      </motion.div>
+                  <section className="savings-result-possibilities" aria-labelledby="possibilities-title">
+                    <div>
+                      <h3 id="possibilities-title">Esse dinheiro poderia ter virado...</h3>
+                      <p>Escolha uma comparação — os exemplos não são somados.</p>
                     </div>
+                    <div className="savings-result-comparison-grid">
+                      <ComparisonCard
+                        image="/assets/calculator-result/travel.webp"
+                        alt="Casal viajando por uma praia tropical em Maceió"
+                        eyebrow="VIAGENS"
+                        value={`${comparisons.trip.quantity} ${comparisons.trip.quantity === 1 ? (comparisons.trip.unit === "diária de viagem" ? "diária" : "viagem") : (comparisons.trip.unit === "diária de viagem" ? "diárias" : "viagens")}`}
+                        description={comparisons.trip.destination === "uma viagem" ? "para aproveitar em uma viagem" : `em casal para ${comparisons.trip.destination}`}
+                        reference={`Referência: ${formatBRL(comparisons.trip.price)} por ${comparisons.trip.unit}`}
+                      />
+                      <span className="savings-result-or" aria-hidden="true">OU</span>
+                      <ComparisonCard
+                        image="/assets/calculator-result/smartphone.webp"
+                        alt="Smartphone premium genérico sem logotipo"
+                        eyebrow="TECNOLOGIA"
+                        value={comparisons.smartphone.quantity > 0 ? `${comparisons.smartphone.quantity} ${comparisons.smartphone.quantity === 1 ? "smartphone premium" : "smartphones premium"}` : `${comparisons.smartphone.percentage}% do valor`}
+                        description={comparisons.smartphone.quantity > 0 ? "do nível de um iPhone Pro" : "de um smartphone premium"}
+                        reference={`Referência: ${formatBRL(comparisons.smartphone.price)} cada`}
+                        featured
+                      />
+                      <span className="savings-result-or" aria-hidden="true">OU</span>
+                      <ComparisonCard
+                        image="/assets/calculator-result/patrimony.webp"
+                        alt="Chaves ao lado de uma casa representando construção de patrimônio"
+                        eyebrow="PATRIMÔNIO"
+                        value={`R$ ${comparisons.patrimony.thousands} mil`}
+                        description={comparisons.patrimony.purpose}
+                        reference="Uma possibilidade para o seu patrimônio"
+                      />
+                    </div>
+                  </section>
+
+                  <div className="savings-result-warning">
+                    <CircleAlert aria-hidden="true" />
+                    <strong>Enquanto você adia, a conta continua chegando.</strong>
                   </div>
 
                   <motion.button
@@ -761,11 +666,14 @@ export function SavingsCalculatorSection({
                     whileTap={reduced ? undefined : { scale: 0.985 }}
                     transition={microTransition}
                   >
-                    <span>{c.calculator.result.followupCta}</span>
+                    <span>QUERO PARAR DE PERDER DINHEIRO</span>
                     <ArrowRight aria-hidden="true" />
                   </motion.button>
                   <p className="savings-calculator-disclaimer">
-                    {c.calculator.result.disclaimer}
+                    Comparações ilustrativas baseadas em valores médios
+                    configuráveis. O gasto projetado não representa economia
+                    garantida. A análise real depende do consumo, das tarifas,
+                    do imóvel e do dimensionamento do sistema.
                   </p>
                 </motion.div>
               )}
