@@ -35,7 +35,10 @@ export function FaqSection() {
               <MapPin aria-hidden="true" />
               <span>{c.faqSection.eyebrow}</span>
             </span>
-            <h2 id="faq-title">{c.faqSection.title}</h2>
+            <h2 id="faq-title">
+              Aproveite o sol e comece a{" "}
+              <span className="text-keyword-blue">economizar hoje!</span>
+            </h2>
             <span className="line-reveal" aria-hidden="true" />
           </div>
           <div className="faq faq-location-list">

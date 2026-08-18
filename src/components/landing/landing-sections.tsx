@@ -50,7 +50,16 @@ export function Benefits() {
         <div className="section-heading motion-heading landing-section-heading">
           <EyebrowReveal>VALOR PARA O CLIENTE</EyebrowReveal>
           <TextReveal
-            lines={[{ content: "Uma jornada comercial mais clara." }]}
+            lines={[
+              {
+                content: (
+                  <>
+                    Uma jornada comercial{" "}
+                    <span className="text-keyword-blue">mais clara.</span>
+                  </>
+                ),
+              },
+            ]}
           />
           <p>
             Benefícios de uma abordagem estruturada — ajuste-os quando a oferta
@@ -84,7 +93,16 @@ export function Process() {
           <EyebrowReveal>COMO FUNCIONA</EyebrowReveal>
           <TextReveal
             lines={[
-              { content: "Do primeiro contato a uma proposta coerente." },
+              {
+                content: (
+                  <>
+                    Do primeiro contato a uma{" "}
+                    <span className="text-keyword-blue">
+                      proposta coerente.
+                    </span>
+                  </>
+                ),
+              },
             ]}
           />
           <LineReveal />
@@ -109,7 +127,16 @@ export function Differentiators() {
         <div className="section-heading motion-heading landing-section-heading criteria-heading">
           <EyebrowReveal>FORMA DE TRABALHAR</EyebrowReveal>
           <TextReveal
-            lines={[{ content: "Critérios que facilitam uma boa decisão." }]}
+            lines={[
+              {
+                content: (
+                  <>
+                    Critérios que facilitam uma{" "}
+                    <span className="text-keyword-blue">boa decisão.</span>
+                  </>
+                ),
+              },
+            ]}
           />
         </div>
         <StaggerGrid className="criteria-grid">

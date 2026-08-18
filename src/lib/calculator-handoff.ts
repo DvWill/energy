@@ -1,6 +1,7 @@
 import {
   type AnalysisHorizon,
   calculateProjectedSpend,
+  isAnalysisHorizon,
 } from "@/lib/savings-calculator";
 
 export const CALCULATOR_HANDOFF_EVENT = "energy:calculator-handoff";
@@ -16,8 +17,6 @@ export type CalculatorSnapshot = {
   showResult: boolean;
 };
 
-const horizons: AnalysisHorizon[] = [1, 5, 10, 25];
-
 function normalizeSnapshot(value: unknown): CalculatorSnapshot | null {
   if (!value || typeof value !== "object") return null;
 
@@ -26,7 +25,7 @@ function normalizeSnapshot(value: unknown): CalculatorSnapshot | null {
     typeof candidate.monthlyBill !== "number" ||
     !Number.isFinite(candidate.monthlyBill) ||
     candidate.monthlyBill < 0 ||
-    !horizons.includes(candidate.analysisHorizon as AnalysisHorizon) ||
+    !isAnalysisHorizon(candidate.analysisHorizon) ||
     typeof candidate.includeAdjustment !== "boolean" ||
     typeof candidate.adjustmentRate !== "number" ||
     !Number.isFinite(candidate.adjustmentRate) ||
@@ -37,7 +36,7 @@ function normalizeSnapshot(value: unknown): CalculatorSnapshot | null {
     return null;
   }
 
-  const analysisHorizon = candidate.analysisHorizon as AnalysisHorizon;
+  const analysisHorizon = candidate.analysisHorizon;
   const annualAdjustmentRate = candidate.includeAdjustment
     ? candidate.adjustmentRate
     : 0;

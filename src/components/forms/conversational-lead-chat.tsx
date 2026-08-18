@@ -22,14 +22,18 @@ import {
   microTransition,
   motionDistance,
 } from "@/lib/motion";
-import { formatBRL, parseBRLCurrency } from "@/lib/savings-calculator";
+import {
+  type AnalysisHorizon,
+  formatBRL,
+  parseBRLCurrency,
+} from "@/lib/savings-calculator";
 import type { LeadInput } from "@/lib/validations";
 
 const content = siteContent.chat;
 
 export type ChatSimulationContext = {
   monthlyBill: number;
-  analysisHorizon: 1 | 5 | 10 | 25;
+  analysisHorizon: AnalysisHorizon;
   estimatedSpendWithoutSolar: number;
   fromCalculator: boolean;
 };

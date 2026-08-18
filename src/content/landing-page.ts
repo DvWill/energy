@@ -8,8 +8,8 @@ export const siteContent = {
   contact: {
     // PENDENTE: substituir pelo e-mail comercial oficial.
     email: "[E-MAIL PENDENTE]",
-    // PENDENTE: informar a URL oficial do WhatsApp, incluindo o número com DDI.
-    whatsappUrl: "",
+    whatsappLabel: "+55 61 99356-1108",
+    whatsappUrl: "https://wa.me/5561993561108",
     location: "Cidade Ocidental, GO",
     map: {
       title: "Localização da Energy em Cidade Ocidental, Goiás",
@@ -90,12 +90,17 @@ export const siteContent = {
       step: 50,
       default: 500,
     },
-    horizons: [1, 5, 10, 25],
+    horizons: [1, 5, 10, 20],
     horizon: {
       label: "Período da projeção",
       ariaLabel: "Selecionar período da projeção",
+      inputAriaLabel: "Quantidade de anos da projeção",
+      sliderAriaLabel: "Ajustar período da projeção em anos",
       yearSingular: "ano",
       yearPlural: "anos",
+      min: 1,
+      max: 20,
+      step: 1,
       default: 10,
     },
     advancedOptionsLabel: "Opções avançadas",
@@ -376,7 +381,6 @@ export const siteContent = {
     "Serviços solares incluídos",
     "Cliente ideal",
     "Diferencial comprovável",
-    "WhatsApp",
     "E-mail",
     "Área de atendimento",
     "Garantias",

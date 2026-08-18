@@ -1,0 +1,55 @@
+:root {
+  --energy-blue-highlight: #0a2b49;
+  --energy-blue-highlight-on-dark: #62c3ff;
+}
+
+html[data-theme="light"]
+  body
+  main#conteudo.home-flow
+  .text-keyword-blue.text-keyword-blue {
+  color: var(--energy-blue-highlight) !important;
+  -webkit-text-fill-color: var(--energy-blue-highlight) !important;
+  text-shadow: none !important;
+}
+
+html[data-theme="light"]
+  body
+  main#conteudo.home-flow
+  .company-editorial
+  .text-keyword-blue.text-keyword-blue {
+  color: var(--energy-blue-highlight-on-dark) !important;
+  -webkit-text-fill-color: var(--energy-blue-highlight-on-dark) !important;
+}
+
+main#conteudo.home-flow > section[id] {
+  scroll-margin-top: 112px;
+}
+
+@media (max-width: 760px) {
+  html {
+    scroll-padding-top: 92px;
+  }
+
+  main#conteudo.home-flow > section[id] {
+    scroll-margin-top: 92px;
+  }
+
+  main#conteudo.home-flow :is(h1, h2, h3) {
+    overflow-wrap: break-word;
+    text-wrap: balance;
+  }
+
+  main#conteudo.home-flow :is(input, select, textarea) {
+    font-size: max(1rem, 16px);
+  }
+
+  main#conteudo.home-flow :is(
+    .button,
+    .hero-link,
+    .solution-panel-cta,
+    .equipment-card-link
+  ) {
+    max-width: 100%;
+    white-space: normal;
+  }
+}

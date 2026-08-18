@@ -142,21 +142,23 @@ export default async function AdminBlogPage({
           <tbody>
             {items.map((item) => (
               <tr key={item.id}>
-                <td>
+                <td data-label="Título">
                   <strong>{item.title}</strong>
                 </td>
-                <td>{item.categoryName ?? "—"}</td>
-                <td>{item.authorName ?? "Equipe Energy"}</td>
-                <td>
+                <td data-label="Categoria">{item.categoryName ?? "—"}</td>
+                <td data-label="Autor">{item.authorName ?? "Equipe Energy"}</td>
+                <td data-label="Status">
                   <span
                     className={`status status-${item.status.toLowerCase()}`}
                   >
                     {statusLabels[item.status] ?? item.status}
                   </span>
                 </td>
-                <td>{publicationDate(item)}</td>
-                <td>{item.updatedAt.toLocaleDateString("pt-BR")}</td>
-                <td>
+                <td data-label="Publicação">{publicationDate(item)}</td>
+                <td data-label="Atualização">
+                  {item.updatedAt.toLocaleDateString("pt-BR")}
+                </td>
+                <td data-label="Ações">
                   <div className="admin-actions">
                     <Link href={`/admin/blog/${item.id}`}>Editar</Link>
                     {isPubliclyAvailable(item, now) && (

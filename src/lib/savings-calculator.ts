@@ -1,4 +1,16 @@
-export type AnalysisHorizon = 1 | 5 | 10 | 25;
+export type AnalysisHorizon = number;
+
+export const ANALYSIS_HORIZON_MIN = 1;
+export const ANALYSIS_HORIZON_MAX = 20;
+
+export function isAnalysisHorizon(value: unknown): value is AnalysisHorizon {
+  return (
+    typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= ANALYSIS_HORIZON_MIN &&
+    value <= ANALYSIS_HORIZON_MAX
+  );
+}
 
 export const FIXED_ANNUAL_ADJUSTMENT_RATE = 10;
 

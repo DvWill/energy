@@ -151,7 +151,7 @@ test("repete o design completo da calculadora e libera o site após o resultado"
   for (const step of ["Conta mensal", "Período", "Resultado"]) {
     await expect(dialog.getByText(step, { exact: true })).toBeVisible();
   }
-  for (const period of ["1 ano", "5 anos", "10 anos", "25 anos"]) {
+  for (const period of ["1 ano", "5 anos", "10 anos", "20 anos"]) {
     await expect(
       dialog.getByRole("button", { name: period, exact: true }),
     ).toBeVisible();
@@ -175,7 +175,19 @@ test("repete o design completo da calculadora e libera o site após o resultado"
     .toBe(true);
 
   await bill.fill("500");
+  const horizonInput = dialog.getByLabel("Quantidade de anos da projeção");
+  const horizonSlider = dialog.getByRole("slider", {
+    name: "Ajustar período da projeção em anos",
+  });
+  await expect(horizonInput).toHaveAttribute("min", "1");
+  await expect(horizonInput).toHaveAttribute("max", "20");
+  await horizonInput.fill("7");
+  await horizonInput.blur();
+  await expect(horizonSlider).toHaveValue("7");
+  await expect(horizonSlider).toHaveAttribute("aria-valuetext", "7 anos");
   await dialog.getByRole("button", { name: "5 anos", exact: true }).click();
+  await expect(horizonInput).toHaveValue("5");
+  await expect(horizonSlider).toHaveValue("5");
   const calculate = dialog.getByRole("button", {
     name: "CLIQUE AQUI E VEJA O QUANTO VOCÊ PERDE",
   });
@@ -212,7 +224,11 @@ test("repete o design completo da calculadora e libera o site após o resultado"
       name: /R\$\s*36\.630,60 em 5 anos/,
     }),
   ).toBeVisible();
-  await expect(siteCalculator.getByText(/10%|reajuste/i)).toHaveCount(0);
+  await expect(
+    siteCalculator
+      .locator('[data-calculator-result="visible"]')
+      .getByText(/10%|reajuste/i),
+  ).toHaveCount(0);
   await expect(page.locator("[data-entry-site-content]")).not.toHaveAttribute(
     "aria-hidden",
     "true",
@@ -281,7 +297,7 @@ test("mantém IDs isolados, fecha por teclado e cabe no celular", async ({
   await scrollIntoDialogView(calculate);
   await calculate.click();
   const resultAmount = dialog.getByRole("heading", {
-    name: /R\$\s*60\.000,00 em 10 anos/,
+    name: /R\$\s*95\.624,55 em 10 anos/,
   });
   const amountBox = await resultAmount.boundingBox();
   expect(amountBox).not.toBeNull();

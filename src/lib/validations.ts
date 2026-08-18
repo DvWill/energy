@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  ANALYSIS_HORIZON_MAX,
+  ANALYSIS_HORIZON_MIN,
+} from "@/lib/savings-calculator";
 
 const clean = (value: string) => value.trim().replace(/\s+/g, " ");
 const optionalCleanString = (maximumLength: number) =>
@@ -49,7 +53,10 @@ export const leadSchema = z
       .pipe(z.string().regex(/^[A-Z]{2}$/, "Informe uma UF válida."))
       .optional(),
     analysisHorizon: z
-      .union([z.literal(1), z.literal(5), z.literal(10), z.literal(25)])
+      .number()
+      .int()
+      .min(ANALYSIS_HORIZON_MIN)
+      .max(ANALYSIS_HORIZON_MAX)
       .optional(),
     estimatedSpendWithoutSolar: z.number().finite().nonnegative().optional(),
   })

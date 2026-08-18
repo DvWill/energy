@@ -106,8 +106,15 @@ export function CompanySection() {
               id="company-title"
               lines={[
                 {
-                  content:
-                    "Histórias, tecnologia e pessoas que movem nossos projetos.",
+                  content: (
+                    <>
+                      Histórias,{" "}
+                      <span className="text-keyword-blue">
+                        tecnologia e pessoas
+                      </span>{" "}
+                      que movem nossos projetos.
+                    </>
+                  ),
                 },
               ]}
             />

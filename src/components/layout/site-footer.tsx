@@ -23,6 +23,13 @@ export function SiteFooter() {
         </div>
         <div>
           <strong>Contato</strong>
+          <a
+            href={c.contact.whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            WhatsApp: {c.contact.whatsappLabel}
+          </a>
           <span>{c.contact.email}</span>
           <span>{c.contact.location}</span>
         </div>

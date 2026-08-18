@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowUpRight, CheckCircle2, MousePointerClick } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, MousePointerClick, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Container } from "@/components/ui/container";
 import { useAccessibleMotion } from "@/hooks/use-accessible-motion";
 import { openLeadChat } from "@/lib/chat-events";
@@ -83,59 +84,112 @@ export function SolarEquipmentSection() {
   const [selected, setSelected] = useState<number | null>(null);
   const reduced = useAccessibleMotion();
   const gridRef = useRef<HTMLDivElement>(null);
-  const detailRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const shouldRestoreFocusRef = useRef(true);
   const current = selected === null ? null : equipment[selected];
 
-  const closeDetails = useCallback(() => {
+  const closeDetails = useCallback((restoreFocus = true) => {
+    shouldRestoreFocusRef.current = restoreFocus;
     setSelected(null);
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const bounds = gridRef.current?.getBoundingClientRect();
-        if (!bounds || (bounds.top >= 0 && bounds.bottom <= window.innerHeight)) return;
-        gridRef.current?.scrollIntoView({
-          behavior: reduced ? "auto" : "smooth",
-          block: "nearest",
-        });
-      });
-    });
-  }, [reduced]);
+  }, []);
 
-  const selectProduct = (index: number) => {
-    if (selected === index) {
-      closeDetails();
-      return;
-    }
+  const selectProduct = (index: number, trigger: HTMLButtonElement) => {
+    triggerRef.current = trigger;
+    shouldRestoreFocusRef.current = true;
     setSelected(index);
   };
 
   useEffect(() => {
-    if (selected === null || !detailRef.current) return;
-    const frame = requestAnimationFrame(() => {
-      const bounds = detailRef.current?.getBoundingClientRect();
-      if (!bounds || (bounds.top >= 0 && bounds.bottom <= window.innerHeight)) return;
-      detailRef.current?.scrollIntoView({
-        behavior: reduced ? "auto" : "smooth",
-        block: "nearest",
-      });
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [reduced, selected]);
-
-  useEffect(() => {
     if (selected === null) return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeDetails();
+
+    const body = document.body;
+    const previousOverflow = body.style.overflow;
+    const previousPaddingRight = body.style.paddingRight;
+    const previousModalOpen = body.getAttribute("data-equipment-modal-open");
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    body.setAttribute("data-equipment-modal-open", "true");
+    body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      const currentPadding = Number.parseFloat(window.getComputedStyle(body).paddingRight) || 0;
+      body.style.paddingRight = `${currentPadding + scrollbarWidth}px`;
+    }
+
+    const focusFrame = requestAnimationFrame(() => closeButtonRef.current?.focus());
+
+    const handleDialogKeys = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        closeDetails();
+        return;
+      }
+
+      if (event.key !== "Tab" || !dialogRef.current) return;
+
+      const focusable = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((element) => element.getAttribute("aria-hidden") !== "true");
+
+      if (focusable.length === 0) {
+        event.preventDefault();
+        dialogRef.current.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey && (active === first || !dialogRef.current.contains(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (active === last || !dialogRef.current.contains(active))) {
+        event.preventDefault();
+        first.focus();
+      }
     };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
+
+    document.addEventListener("keydown", handleDialogKeys, true);
+
+    return () => {
+      cancelAnimationFrame(focusFrame);
+      document.removeEventListener("keydown", handleDialogKeys, true);
+      body.style.overflow = previousOverflow;
+      body.style.paddingRight = previousPaddingRight;
+      if (previousModalOpen === null) {
+        body.removeAttribute("data-equipment-modal-open");
+      } else {
+        body.setAttribute("data-equipment-modal-open", previousModalOpen);
+      }
+    };
   }, [closeDetails, selected]);
+
+  const restoreTriggerFocus = useCallback(() => {
+    if (shouldRestoreFocusRef.current) {
+      triggerRef.current?.focus({ preventScroll: true });
+    }
+    shouldRestoreFocusRef.current = true;
+  }, []);
+
+  const requestProject = () => {
+    closeDetails(false);
+    requestAnimationFrame(openLeadChat);
+  };
 
   return (
     <section id="equipamentos" className="section equipment-section" aria-labelledby="equipment-title">
       <Container>
         <header className="equipment-heading">
           <span>TECNOLOGIA QUE GERA ECONOMIA</span>
-          <h2 id="equipment-title">Conheça os equipamentos de um sistema solar</h2>
+          <h2 id="equipment-title">
+            Conheça os equipamentos de um{" "}
+            <span className="text-keyword-blue">sistema solar</span>
+          </h2>
           <p>Cada componente possui uma função essencial para transformar a luz do sol em energia segura, eficiente e econômica.</p>
         </header>
 
@@ -158,50 +212,94 @@ export function SolarEquipmentSection() {
           </div>
         )}
 
-        <AnimatePresence mode="wait" initial={false}>
+      </Container>
+
+      {typeof document !== "undefined" && createPortal(
+        <AnimatePresence initial={false} onExitComplete={restoreTriggerFocus}>
           {current && (
             <motion.div
-              ref={detailRef}
-              className="equipment-detail-panel"
-              key={current.number}
-              initial={reduced ? false : { opacity: 0, height: 0, y: 18 }}
-              animate={{ opacity: 1, height: "auto", y: 0 }}
-              exit={reduced ? undefined : { opacity: 0, height: 0, y: -10 }}
-              transition={{ duration: reduced ? 0 : 0.42 }}
+              className="equipment-modal-backdrop"
+              key="equipment-modal"
+              initial={reduced ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: reduced ? 0 : 0.2 }}
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget) closeDetails();
+              }}
             >
-              <button
-                type="button"
-                className="equipment-detail-close"
-                aria-label="Fechar detalhes do equipamento"
-                onClick={closeDetails}
+              <motion.div
+                ref={dialogRef}
+                id={`equipment-dialog-${current.number}`}
+                className="equipment-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={`equipment-dialog-title-${current.number}`}
+                aria-describedby={`equipment-dialog-summary-${current.number}`}
+                tabIndex={-1}
+                initial={reduced ? false : { opacity: 0, scale: 0.97, y: 24 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: 14 }}
+                transition={{ duration: reduced ? 0 : 0.24, ease: [0.22, 1, 0.36, 1] }}
+                onMouseDown={(event) => event.stopPropagation()}
               >
-                Fechar detalhes <span aria-hidden="true">×</span>
-              </button>
-              <div className="equipment-detail-copy">
-                <span>{current.number} / EQUIPAMENTO</span>
-                <h3>{current.name}</h3>
-                <p>{current.summary}</p>
-                <div className="equipment-detail-tags">
-                  {(current.metrics ?? current.tabs.flatMap((item) => item.items)).slice(0, 3).map((item) => <span key={item}>{item}</span>)}
+                <button
+                  ref={closeButtonRef}
+                  type="button"
+                  className="equipment-modal-close"
+                  aria-label={`Fechar detalhes de ${current.name}`}
+                  onClick={() => closeDetails()}
+                >
+                  <span>Fechar</span>
+                  <X aria-hidden="true" />
+                </button>
+
+                <div className="equipment-modal-layout">
+                  <div className="equipment-modal-visual">
+                    <ProductImage product={current} priority />
+                    <span className="equipment-modal-visual-number" aria-hidden="true">{current.number}</span>
+                  </div>
+
+                  <div className="equipment-modal-content">
+                    <span className="equipment-modal-eyebrow">{current.number} / EQUIPAMENTO</span>
+                    <h3 id={`equipment-dialog-title-${current.number}`}>{current.name}</h3>
+                    <p id={`equipment-dialog-summary-${current.number}`} className="equipment-modal-summary">{current.summary}</p>
+
+                    {current.metrics && (
+                      <div className="equipment-modal-tags" aria-label="Destaques do equipamento">
+                        {current.metrics.map((metric) => <span key={metric}>{metric}</span>)}
+                      </div>
+                    )}
+
+                    <div className="equipment-modal-sections">
+                      {current.tabs.map((tab) => (
+                        <section key={tab.label} className="equipment-modal-section">
+                          <h4>{tab.label}</h4>
+                          <ul>
+                            {tab.items.map((item) => (
+                              <li key={item}><CheckCircle2 aria-hidden="true" /><span>{item}</span></li>
+                            ))}
+                          </ul>
+                        </section>
+                      ))}
+                    </div>
+
+                    {current.note && <p className="equipment-modal-note">{current.note}</p>}
+
+                    <div className="equipment-modal-footer">
+                      <button type="button" className="button equipment-modal-cta" onClick={requestProject}>
+                        Solicite seu projeto solar <ArrowUpRight aria-hidden="true" />
+                      </button>
+                      <span>Projeto dimensionado para a sua necessidade.</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="equipment-detail-benefits">
-                  {current.tabs[0].items.slice(0, 4).map((item) => (
-                    <div key={item}><CheckCircle2 aria-hidden="true" /><span>{item}</span></div>
-                  ))}
-                </div>
-                {current.note && <p className="equipment-detail-note">{current.note}</p>}
-                <button type="button" className="button equipment-detail-cta" onClick={openLeadChat}>Solicite seu projeto solar <ArrowUpRight aria-hidden="true" /></button>
-              </div>
-              <div className="equipment-detail-visual">
-                <ProductImage product={current} priority />
-                {(current.metrics ?? current.tabs.map((item) => item.label)).slice(0, 2).map((item, index) => (
-                  <span className={`equipment-detail-callout equipment-detail-callout-${index + 1}`} key={item}>{item}</span>
-                ))}
-              </div>
+              </motion.div>
             </motion.div>
           )}
-        </AnimatePresence>
-      </Container>
+        </AnimatePresence>,
+        document.body,
+      )}
     </section>
   );
 }
@@ -210,8 +308,8 @@ function ProductImage({ product, priority = false }: { product: Equipment; prior
   return <div className="equipment-product"><span className="equipment-orbit" aria-hidden="true" /><Image src={withBasePath(product.image)} alt={product.alt} fill priority={priority} loading={priority ? "eager" : "lazy"} sizes="(max-width: 760px) 88vw, 45vw" /></div>;
 }
 
-function EquipmentCard({ product, index, selected, onSelect }: { product: Equipment; index: number; selected: boolean; onSelect: (index: number) => void }) {
-  return <button type="button" className="equipment-card" data-selected={selected ? "true" : "false"} aria-pressed={selected} onClick={() => onSelect(index)} aria-label={`Conheça o equipamento ${product.name}`}>
+function EquipmentCard({ product, index, selected, onSelect }: { product: Equipment; index: number; selected: boolean; onSelect: (index: number, trigger: HTMLButtonElement) => void }) {
+  return <button type="button" className="equipment-card" data-selected={selected ? "true" : "false"} aria-haspopup="dialog" aria-expanded={selected} aria-controls={selected ? `equipment-dialog-${product.number}` : undefined} onClick={(event) => onSelect(index, event.currentTarget)} aria-label={`Conheça o equipamento ${product.name}`}>
     <span className="equipment-card-number">{product.number}</span>
     {selected && <span className="equipment-card-selected"><i aria-hidden="true" />Selecionado</span>}
     <span className="equipment-card-media"><Image src={withBasePath(product.image)} alt="" fill priority={index === 0} loading={index === 0 ? "eager" : "lazy"} sizes="(max-width: 760px) 78vw, 25vw" /></span>

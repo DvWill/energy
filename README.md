@@ -36,7 +36,7 @@ Copie `.env.example` para `.env.local`. Defina `NEXT_PUBLIC_SITE_URL` com o dom�
 
 ## Calculadora e conversa de simulação
 
-A segunda seção da landing projeta o gasto informado para 1, 5, 10 ou 25 anos, com reajuste anual opcional. A projeção é educativa e não representa promessa de economia. O CTA do resultado transfere o valor, o período e a estimativa para o chatbot da sessão atual; nome, WhatsApp, e-mail e demais dados pessoais não são gravados em `localStorage`.
+A segunda seção da landing projeta o gasto para qualquer período inteiro entre 1 e 20 anos, com atalhos de 1, 5, 10 e 20 anos. A projeção é educativa e não representa promessa de economia. O CTA do resultado transfere o valor, o período e a estimativa para o chatbot da sessão atual; nome, WhatsApp, e-mail e demais dados pessoais não são gravados em `localStorage`.
 
 Antes da publicação, configure proteção de borda/rate limit na hospedagem, revise a política com apoio jurídico e forneça os dados oficiais listados em `siteContent.pending`.
 

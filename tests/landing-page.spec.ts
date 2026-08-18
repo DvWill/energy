@@ -15,6 +15,8 @@ test.beforeEach(async ({ page }) => {
 const calculatorLabels = {
   monthlyBill: "Valor médio mensal da conta de energia em reais",
   slider: "Ajustar valor médio mensal da conta de energia",
+  horizonInput: "Quantidade de anos da projeção",
+  horizonSlider: "Ajustar período da projeção em anos",
   calculate: "CLIQUE AQUI E VEJA O QUANTO VOCÊ PERDE",
 } as const;
 
@@ -45,7 +47,7 @@ function watchRuntimeErrors(page: Page) {
 async function configureCalculator(
   page: Page,
   monthlyBill = 1_000,
-  horizon: 1 | 5 | 10 | 25 = 5,
+  horizon: 1 | 5 | 10 | 20 = 5,
 ) {
   const calculator = page.locator("#calculadora");
   const input = calculator.getByLabel(calculatorLabels.monthlyBill);
@@ -167,6 +169,15 @@ test("jornada essencial da landing page", async ({ page }) => {
   await expect(
     page.getByRole("link", { name: "Solicitar uma proposta" }).first(),
   ).toBeVisible();
+  await expect(page.locator(".hero-primary-cta")).toHaveAttribute(
+    "href",
+    "https://wa.me/5561993561108",
+  );
+  await expect(
+    page.getByRole("contentinfo").getByRole("link", {
+      name: "WhatsApp: +55 61 99356-1108",
+    }),
+  ).toHaveAttribute("href", "https://wa.me/5561993561108");
   await page
     .getByRole("navigation", { name: "Navegação principal" })
     .getByRole("link", { name: "Localização" })
@@ -339,7 +350,7 @@ test("mantém o reajuste de 10% oculto do cliente", async ({ page }) => {
   await expect(result).not.toContainText(/10%|reajuste|NaN|Infinity/i);
 });
 
-test("slider monetário permanece sincronizado e permite trocar o período", async ({
+test("controles monetário e anual permanecem sincronizados com anos flexíveis", async ({
   page,
 }) => {
   await page.goto("/");
@@ -359,16 +370,81 @@ test("slider monetário permanece sincronizado e permite trocar o período", asy
     currencyPattern(1_500),
   );
 
-  const horizon = calculator.getByRole("button", { name: "25 anos" });
-  await horizon.click();
-  await expect(horizon).toHaveAttribute("aria-pressed", "true");
+  const horizonInput = calculator.getByLabel(calculatorLabels.horizonInput);
+  const horizonSlider = calculator.getByRole("slider", {
+    name: calculatorLabels.horizonSlider,
+  });
+  await expect(horizonInput).toHaveAttribute("min", "1");
+  await expect(horizonInput).toHaveAttribute("max", "20");
+  const twentyYears = calculator.getByRole("button", { name: "20 anos" });
+  await twentyYears.click();
+  await expect(twentyYears).toHaveAttribute("aria-pressed", "true");
+  await expect(horizonInput).toHaveValue("20");
+  await expect(horizonSlider).toHaveValue("20");
+
+  await horizonInput.fill("13");
+  await horizonInput.blur();
+  await expect(horizonSlider).toHaveValue("13");
+  await expect(horizonSlider).toHaveAttribute("aria-valuetext", "13 anos");
+  await expect(twentyYears).toHaveAttribute("aria-pressed", "false");
   const result = await revealCalculatorResult(page);
+  const projectedSpend =
+    1_500 * 12 * ((Math.pow(1.1, 13) - 1) / 0.1);
   await expect(
     result
       .locator("dl > div")
-      .filter({ hasText: "Gasto no período escolhido" })
+      .filter({ hasText: "No período escolhido" })
       .locator("dd"),
-  ).toHaveText(currencyPattern(450_000));
+  ).toHaveText(currencyPattern(projectedSpend));
+});
+
+test("equipamentos abrem modal acessível com fundo desfocado no mobile", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 390, height: 760 });
+  await page.goto("/");
+
+  const trigger = page.getByRole("button", {
+    name: "Conheça o equipamento Painéis solares",
+  });
+  await trigger.click();
+
+  const dialog = page.getByRole("dialog", { name: "Painéis solares" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toHaveAttribute("aria-modal", "true");
+  await expect(page.locator("body")).toHaveAttribute(
+    "data-equipment-modal-open",
+    "true",
+  );
+  await expect
+    .poll(() =>
+      page
+        .locator("[data-entry-site-content]")
+        .evaluate((element) => getComputedStyle(element).filter),
+    )
+    .toContain("blur(11px)");
+  await expect
+    .poll(() => page.evaluate(() => document.body.style.overflow))
+    .toBe("hidden");
+
+  const dialogBox = await dialog.boundingBox();
+  expect(dialogBox).not.toBeNull();
+  expect(dialogBox!.x).toBeGreaterThanOrEqual(0);
+  expect(dialogBox!.y).toBeGreaterThanOrEqual(0);
+  expect(dialogBox!.x + dialogBox!.width).toBeLessThanOrEqual(390.5);
+  expect(dialogBox!.y + dialogBox!.height).toBeLessThanOrEqual(760.5);
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(trigger).toBeFocused();
+  await expect(page.locator("body")).not.toHaveAttribute(
+    "data-equipment-modal-open",
+    "true",
+  );
+  await expect
+    .poll(() => page.evaluate(() => document.body.style.overflow))
+    .toBe("");
 });
 
 test("chat flutuante valida a conta, permite voltar e restaura o foco com Escape", async ({
@@ -820,8 +896,8 @@ test("API aceita o payload conversacional, preserva o honeypot e não simula suc
     monthlyBill: 1_000,
     city: "Campinas",
     state: "SP",
-    analysisHorizon: 5,
-    estimatedSpendWithoutSolar: 60_000,
+    analysisHorizon: 13,
+    estimatedSpendWithoutSolar: 156_000,
   };
 
   const withoutChannel = await request.post("/api/leads", {
@@ -909,7 +985,7 @@ for (const width of [280, 320, 360, 390, 768, 900, 1024, 1440]) {
     await page.goto("/");
     await expectNoHorizontalOverflow(page);
 
-    await configureCalculator(page, 1_000, 25);
+    await configureCalculator(page, 1_000, 20);
     const result = await revealCalculatorResult(page);
     await expectNoHorizontalOverflow(page);
     await result

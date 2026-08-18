@@ -12,6 +12,7 @@ import {
   Activity,
   ArrowRight,
   Bolt,
+  CalendarRange,
   Calculator,
   Check,
   CircleDollarSign,
@@ -159,6 +160,7 @@ export function SavingsCalculatorSection({
   const inputRef = useRef<HTMLInputElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
   const [inputValue, setInputValue] = useState(formatBRL(monthlyBill));
+  const [horizonInputValue, setHorizonInputValue] = useState(String(horizon));
   const [hasCalculated, setHasCalculated] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const [attempted, setAttempted] = useState(false);
@@ -185,6 +187,23 @@ export function SavingsCalculatorSection({
     ((sliderValue - c.calculator.slider.min) /
       (c.calculator.slider.max - c.calculator.slider.min)) *
     100;
+  const horizonProgress =
+    ((horizon - c.calculator.horizon.min) /
+      (c.calculator.horizon.max - c.calculator.horizon.min)) *
+    100;
+
+  const commitHorizonInput = (value: string) => {
+    const parsed = value.trim() ? Number(value) : Number.NaN;
+    const nextHorizon = Number.isFinite(parsed)
+      ? Math.min(
+          c.calculator.horizon.max,
+          Math.max(c.calculator.horizon.min, Math.round(parsed)),
+        )
+      : horizon;
+    setHorizonInputValue(String(nextHorizon));
+    onHorizonChange(nextHorizon);
+    setActiveStage(1);
+  };
 
   useEffect(() => {
     if (
@@ -196,6 +215,7 @@ export function SavingsCalculatorSection({
 
     lastTransferredSnapshot.current = transferredSnapshot;
     setInputValue(formatBRL(transferredSnapshot.monthlyBill));
+    setHorizonInputValue(String(transferredSnapshot.analysisHorizon));
     setAttempted(transferredSnapshot.showResult);
     setHasCalculated(transferredSnapshot.showResult);
     shouldFocusTransferredResult.current = transferredSnapshot.showResult;
@@ -309,7 +329,17 @@ export function SavingsCalculatorSection({
             <EyebrowReveal>{c.calculator.eyebrow}</EyebrowReveal>
             <TextReveal
               id="calculator-title"
-              lines={[{ content: c.calculator.title }]}
+              lines={[
+                {
+                  content: (
+                    <>
+                      Quanto dinheiro sua{" "}
+                      <span className="text-keyword-blue">conta de luz</span>{" "}
+                      ainda vai consumir?
+                    </>
+                  ),
+                },
+              ]}
             />
             <p>{c.calculator.description}</p>
             <LineReveal />
@@ -474,6 +504,43 @@ export function SavingsCalculatorSection({
 
                     <fieldset className="savings-calculator-horizons">
                       <legend>{c.calculator.horizon.label}</legend>
+                      <div
+                        className="savings-calculator-money-input"
+                        style={{ marginBottom: 12 }}
+                      >
+                        <CalendarRange aria-hidden="true" />
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          min={c.calculator.horizon.min}
+                          max={c.calculator.horizon.max}
+                          step={c.calculator.horizon.step}
+                          value={horizonInputValue}
+                          aria-label={c.calculator.horizon.inputAriaLabel}
+                          onChange={(event) => {
+                            const value = event.target.value;
+                            setHorizonInputValue(value);
+                            const parsed = Number(value);
+                            if (
+                              Number.isInteger(parsed) &&
+                              parsed >= c.calculator.horizon.min &&
+                              parsed <= c.calculator.horizon.max
+                            ) {
+                              onHorizonChange(parsed);
+                              setActiveStage(1);
+                            }
+                          }}
+                          onBlur={(event) =>
+                            commitHorizonInput(event.target.value)
+                          }
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                              event.preventDefault();
+                              event.currentTarget.blur();
+                            }
+                          }}
+                        />
+                      </div>
                       <div className="savings-calculator-horizon-options">
                         {c.calculator.horizons.map((years) => (
                           <motion.button
@@ -481,6 +548,7 @@ export function SavingsCalculatorSection({
                             type="button"
                             aria-pressed={horizon === years}
                             onClick={() => {
+                              setHorizonInputValue(String(years));
                               onHorizonChange(years);
                               setActiveStage(1);
                             }}
@@ -504,18 +572,32 @@ export function SavingsCalculatorSection({
                           </motion.button>
                         ))}
                       </div>
-                      <div
-                        className="savings-calculator-period-visual"
-                        aria-hidden="true"
-                      >
-                        <motion.span
-                          animate={{
-                            width: `${Math.max(8, (horizon / 25) * 100)}%`,
-                          }}
-                          transition={
-                            reduced ? { duration: 0 } : microTransition
-                          }
+                      <div className="savings-calculator-range-shell">
+                        <span
+                          aria-hidden="true"
+                          style={{ width: `${horizonProgress.toFixed(3)}%` }}
                         />
+                        <input
+                          className="savings-calculator-range"
+                          type="range"
+                          min={c.calculator.horizon.min}
+                          max={c.calculator.horizon.max}
+                          step={c.calculator.horizon.step}
+                          value={horizon}
+                          aria-label={c.calculator.horizon.sliderAriaLabel}
+                          aria-valuetext={yearLabel(horizon)}
+                          onChange={(event) => {
+                            const value = Number(event.target.value);
+                            setHorizonInputValue(String(value));
+                            onHorizonChange(value);
+                            setActiveStage(1);
+                          }}
+                        />
+                      </div>
+                      <div className="savings-calculator-range-labels">
+                        <span>{yearLabel(c.calculator.horizon.min)}</span>
+                        <output aria-live="polite">{yearLabel(horizon)}</output>
+                        <span>{yearLabel(c.calculator.horizon.max)}</span>
                       </div>
                       <p aria-hidden="true">
                         <span>{c.calculator.experience.todayLabel}</span>

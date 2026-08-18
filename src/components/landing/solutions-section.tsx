@@ -20,7 +20,12 @@ export function SolutionsSection() {
         <header className="solutions-immersive-intro">
           <div>
             <span>ONDE A ENERGY ATUA</span>
-            <h2>Soluções solares para diferentes necessidades.</h2>
+            <h2>
+              Soluções solares para{" "}
+              <span className="text-keyword-blue">
+                diferentes necessidades.
+              </span>
+            </h2>
             <i aria-hidden="true" />
           </div>
           <p>

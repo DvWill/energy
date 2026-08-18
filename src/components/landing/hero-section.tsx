@@ -180,7 +180,12 @@ export function HeroSection({ primaryCta }: { primaryCta: string }) {
           data-motion-reveal=""
           variants={heroItemVariants}
         >
-          <MagneticButton className="button hero-primary-cta" href="#contato">
+          <MagneticButton
+            className="button hero-primary-cta"
+            href={c.contact.whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <span>{primaryCta}</span>
             <ArrowRight aria-hidden="true" />
           </MagneticButton>
