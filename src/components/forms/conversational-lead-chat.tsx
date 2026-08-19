@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
-  LoaderCircle,
   MessageCircle,
   Pencil,
   Send,
@@ -27,9 +26,9 @@ import {
   formatBRL,
   parseBRLCurrency,
 } from "@/lib/savings-calculator";
-import type { LeadInput } from "@/lib/validations";
 
 const content = siteContent.chat;
+const companyWhatsapp = "5561993561108";
 
 export type ChatSimulationContext = {
   monthlyBill: number;
@@ -186,7 +185,6 @@ export function ConversationalLeadChat({
   );
   const [errors, setErrors] = useState<Partial<Record<ChatField, string>>>({});
   const [consent, setConsent] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>(null);
 
   const monthlyBill = parseBRLCurrency(answers.monthlyBill);
@@ -466,9 +464,9 @@ export function ConversationalLeadChat({
     return null;
   };
 
-  const submitLead = async (event: FormEvent<HTMLFormElement>) => {
+  const submitLead = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (isSubmitting || !validateCurrentStep()) return;
+    if (!validateCurrentStep()) return;
     const invalidStep = validateAllAnswers();
     if (invalidStep) {
       moveTo(invalidStep);
@@ -476,71 +474,24 @@ export function ConversationalLeadChat({
     }
     if (!answers.customerType) return;
 
-    const endpointFromEnvironment =
-      process.env.NEXT_PUBLIC_LEAD_FORM_URL?.trim();
-    if (
-      process.env.NEXT_PUBLIC_STATIC_HOST === "true" &&
-      !endpointFromEnvironment
-    ) {
-      setSubmitStatus({
-        kind: "error",
-        message:
-          "O formulário ainda não está conectado neste ambiente. Configure um serviço de formulários externo para habilitar o envio.",
-      });
-      return;
-    }
-
-    const payload: LeadInput = {
-      name: answers.name,
+    const message = [
+      "Olá! Fiz uma simulação no site da ENERGY e gostaria de falar com um especialista.",
+      "",
+      `Nome: ${answers.name.trim()}`,
+      `Tipo de projeto: ${customerTypeOption?.label ?? "Projeto solar"}`,
       ...(answers.customerType === "business"
-        ? { company: answers.company }
-        : {}),
-      email: answers.email,
-      phone: answers.whatsapp,
-      message: `Simulação solicitada para ${customerTypeOption?.label.toLowerCase() ?? "projeto solar"} em ${answers.city.trim()}/${answers.state.trim().toUpperCase()}, com conta média de ${formatBRL(monthlyBill)}.`,
-      consent,
-      website: answers.website,
-      origin: "conversational-chat",
-      customerType: answers.customerType,
-      monthlyBill,
-      city: answers.city,
-      state: answers.state,
-      analysisHorizon: simulation.analysisHorizon,
-      estimatedSpendWithoutSolar: estimatedSpend,
-    };
+        ? [`Empresa: ${answers.company.trim()}`]
+        : []),
+      `Local: ${answers.city.trim()}/${answers.state.trim().toUpperCase()}`,
+      `Conta mensal: ${formatBRL(monthlyBill)}`,
+      `Período da simulação: ${simulation.analysisHorizon} anos`,
+      `Gasto estimado sem energia solar: ${formatBRL(estimatedSpend)}`,
+      `Meu WhatsApp: ${answers.whatsapp.trim()}`,
+      `E-mail: ${answers.email.trim()}`,
+    ].join("\n");
 
-    setIsSubmitting(true);
-    setSubmitStatus(null);
-    try {
-      const response = await fetch(endpointFromEnvironment || "/api/leads", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const responseBody: unknown = await response.json().catch(() => null);
-      const responseMessage =
-        responseBody &&
-        typeof responseBody === "object" &&
-        "message" in responseBody &&
-        typeof responseBody.message === "string"
-          ? responseBody.message
-          : null;
-      if (!response.ok)
-        throw new Error(responseMessage ?? content.status.error);
-
-      setSubmitStatus({
-        kind: "success",
-        message: responseMessage ?? content.status.success,
-      });
-      setStep("success");
-    } catch (error) {
-      setSubmitStatus({
-        kind: "error",
-        message: error instanceof Error ? error.message : content.status.error,
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    const whatsappUrl = `https://wa.me/${companyWhatsapp}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
   };
 
   const resetConversation = () => {
@@ -704,7 +655,6 @@ export function ConversationalLeadChat({
       return (
         <form
           className="chat-step-form"
-          aria-busy={isSubmitting}
           onSubmit={submitLead}
         >
           <div className="honeypot" aria-hidden="true">
@@ -750,7 +700,6 @@ export function ConversationalLeadChat({
             <button
               type="button"
               className="chat-secondary-action"
-              disabled={isSubmitting}
               onClick={moveBack}
             >
               <ArrowLeft aria-hidden="true" />
@@ -759,19 +708,12 @@ export function ConversationalLeadChat({
             <motion.button
               type="submit"
               className="chat-primary-action chat-send-action"
-              disabled={isSubmitting}
-              whileHover={
-                reduced || isSubmitting ? undefined : { scale: 1.015, y: -1 }
-              }
-              whileTap={reduced || isSubmitting ? undefined : { scale: 0.985 }}
+              whileHover={reduced ? undefined : { scale: 1.015, y: -1 }}
+              whileTap={reduced ? undefined : { scale: 0.985 }}
               transition={microTransition}
             >
-              {isSubmitting ? (
-                <LoaderCircle className="spin" aria-hidden="true" />
-              ) : (
-                <Send aria-hidden="true" />
-              )}
-              {isSubmitting ? content.actions.sending : content.actions.send}
+              <Send aria-hidden="true" />
+              {content.actions.send}
             </motion.button>
           </div>
           {submitStatus?.kind === "error" && (

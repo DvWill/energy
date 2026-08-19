@@ -22,38 +22,33 @@ import {
 const slides = [
   {
     src: "/images/company/equipe-energy.webp",
-    alt: "Equipe Energy na recepção da empresa",
-    eyebrow: "QUEM SOMOS",
-    title: "Estrutura real. Contato humano.",
-    text: "Um ambiente preparado para receber demandas, desenvolver projetos e aproximar pessoas das decisões sobre energia.",
-  },
-  {
-    src: "/images/company/planejamento.webp",
-    alt: "Ambiente de planejamento da Energy",
-    eyebrow: "PLANEJAMENTO",
-    title: "Cada projeto começa com contexto.",
-    text: "Organização e análise para transformar necessidades em próximos passos claros.",
-  },
-  {
-    src: "/images/company/conhecimento-tecnico.webp",
-    alt: "Profissional da Energy apresentando um inversor solar",
-    eyebrow: "CONHECIMENTO TÉCNICO",
-    title: "Tecnologia explicada com clareza.",
-    text: "A proximidade entre pessoas e equipamentos faz parte de uma decisão mais bem orientada.",
+    alt: "Monitoramento inteligente de energia",
+    eyebrow: "MONITORAMENTO",
+    title: "Acompanhamento inteligente em tempo real.",
   },
   {
     src: "/images/company/novas-tecnologias.webp",
     alt: "Carregador elétrico de parede em demonstração",
     eyebrow: "NOVAS TECNOLOGIAS",
     title: "Energia em constante evolução.",
-    text: "Acompanhamos tecnologias que ampliam as possibilidades de uso inteligente da energia.",
   },
   {
     src: "/images/company/atendimento-proximo.webp",
-    alt: "Profissional de atendimento com a identidade da Energy",
+    alt: "Profissional de atendimento da Energy",
     eyebrow: "ATENDIMENTO",
     title: "Uma conversa próxima desde o início.",
-    text: "Pessoas preparadas para ouvir, organizar informações e conectar você à equipe certa.",
+  },
+  {
+    src: "/images/company/planejamento.webp",
+    alt: "Ambiente de planejamento da Energy",
+    eyebrow: "PLANEJAMENTO",
+    title: "Cada projeto começa com contexto.",
+  },
+  {
+    src: "/images/company/conhecimento-tecnico.webp",
+    alt: "Resultados de desempenho energético",
+    eyebrow: "DESEMPENHO",
+    title: "Resultados que comprovam nossa energia.",
   },
 ] as const;
 
@@ -66,7 +61,7 @@ function relativePosition(index: number, active: number) {
 }
 
 export function CompanySection() {
-  const [active, setActive] = useState(1);
+  const [active, setActive] = useState(2);
   const reduced = useAccessibleMotion();
 
   const paginate = (delta: number) => {
@@ -84,7 +79,7 @@ export function CompanySection() {
 
   return (
     <section
-      id="quem-somos"
+      id="por-dentro-da-energy"
       className="section company-section company-editorial"
       aria-labelledby="company-title"
     >
@@ -109,7 +104,7 @@ export function CompanySection() {
                   content: (
                     <>
                       Histórias,{" "}
-                      <span className="text-keyword-blue">
+                      <span className="company-title-accent">
                         tecnologia e pessoas
                       </span>{" "}
                       que movem nossos projetos.
@@ -216,7 +211,7 @@ export function CompanySection() {
             type="button"
             className="company-carousel-arrow company-carousel-arrow-prev"
             onClick={() => paginate(-1)}
-            aria-label="História anterior"
+            aria-label="Slide anterior"
             whileHover={reduced ? undefined : { scale: 1.06 }}
             whileTap={reduced ? undefined : { scale: 0.95 }}
             transition={microTransition}
@@ -227,7 +222,7 @@ export function CompanySection() {
             type="button"
             className="company-carousel-arrow company-carousel-arrow-next"
             onClick={() => paginate(1)}
-            aria-label="Próxima história"
+            aria-label="Próximo slide"
             whileHover={reduced ? undefined : { scale: 1.06 }}
             whileTap={reduced ? undefined : { scale: 0.95 }}
             transition={microTransition}

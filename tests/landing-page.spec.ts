@@ -223,13 +223,13 @@ test("indicadores contam ao entrar na viewport e o mapa permanece acessível", a
   await expect(map).toHaveAttribute("src", /google\.com\/maps/);
 });
 
-test("as dez seções mantêm a ordem e a continuidade visual da página", async ({
+test("as nove seções mantêm a ordem e a continuidade visual da página", async ({
   page,
 }) => {
   await page.goto("/");
 
   const sections = page.locator("main.home-flow > section");
-  await expect(sections).toHaveCount(10);
+  await expect(sections).toHaveCount(9);
   const structure = await sections.evaluateAll((elements) =>
     elements.map((element, index) => {
       const rect = element.getBoundingClientRect();
@@ -254,8 +254,7 @@ test("as dez seções mantêm a ordem e a continuidade visual da página", async
     "Resultados da Energy",
     "solucao",
     "solucoes",
-    "beneficios",
-    "quem-somos",
+    "por-dentro-da-energy",
     "processo",
     "Comparação de abordagens",
     "faq",
@@ -504,29 +503,16 @@ test("CTA do resultado abre o chat com valor e horizonte transferidos", async ({
   ).toHaveAttribute("aria-valuenow", /\d+/);
 });
 
-test("chat valida todas as etapas, corrige respostas e envia o payload esperado", async ({
+test("chat valida todas as etapas, corrige respostas e abre o WhatsApp da empresa", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  const payloads: Record<string, unknown>[] = [];
-  let submissionAttempt = 0;
-  await page.route("**/api/leads", async (route) => {
-    if (route.request().method() !== "POST") {
-      await route.continue();
-      return;
-    }
-    payloads.push(route.request().postDataJSON() as Record<string, unknown>);
-    submissionAttempt += 1;
-    await route.fulfill({
-      status: submissionAttempt === 1 ? 502 : 200,
-      contentType: "application/json",
-      body: JSON.stringify({
-        message:
-          submissionAttempt === 1
-            ? "Falha simulada no canal de envio."
-            : "Lead de teste recebido com sucesso.",
-      }),
-    });
+  await page.addInitScript(() => {
+    window.open = (url) => {
+      (window as Window & { __whatsappUrl?: string }).__whatsappUrl =
+        typeof url === "string" ? url : url?.toString();
+      return null;
+    };
   });
 
   await page.goto("/");
@@ -633,34 +619,16 @@ test("chat valida todas as etapas, corrige respostas e envia o payload esperado"
     name: "Enviar para um especialista",
   });
   await submit.click();
-  await expect(dialog.getByRole("alert")).toHaveText(
-    "Falha simulada no canal de envio.",
+  const capturedUrl = await page.evaluate(
+    () => (window as Window & { __whatsappUrl?: string }).__whatsappUrl,
   );
-  await expect(dialog.getByText(/Recebemos seus dados/)).toHaveCount(0);
-
-  await submit.click();
-  await expect(
-    dialog.getByText("Lead de teste recebido com sucesso."),
-  ).toBeVisible();
-  await expect.poll(() => payloads.length).toBe(2);
-  expect(payloads[0]).toEqual(
-    expect.objectContaining({
-      name: "Ana Teste",
-      company: "Solar Teste Ltda",
-      email: "ana.teste@example.com",
-      phone: "(19) 99999-9999",
-      customerType: "business",
-      monthlyBill: 1_000,
-      city: "Campinas",
-      state: "SP",
-      analysisHorizon: 10,
-      estimatedSpendWithoutSolar: 120_000,
-      consent: true,
-      origin: "conversational-chat",
-      website: "",
-      message: expect.any(String),
-    }),
-  );
+  expect(capturedUrl).toBeTruthy();
+  const whatsappUrl = new URL(capturedUrl!);
+  expect(whatsappUrl.hostname).toBe("wa.me");
+  expect(whatsappUrl.pathname).toBe("/5561993561108");
+  expect(whatsappUrl.searchParams.get("text")).toContain("Ana Teste");
+  expect(whatsappUrl.searchParams.get("text")).toContain("Solar Teste Ltda");
+  expect(whatsappUrl.searchParams.get("text")).toContain("Campinas/SP");
 });
 
 test("menu mobile abre e fecha após navegação", async ({ page }) => {
@@ -783,6 +751,29 @@ test("prefers-reduced-motion remove parallax, stagger e movimento contínuo", as
   await page.keyboard.press("Escape");
 });
 
+test("Quem Somos apresenta os fundadores e ativa a navegação", async ({ page }) => {
+  await page.goto("/");
+  const section = page.locator("#quem-somos");
+  await section.scrollIntoViewIfNeeded();
+  await expect(
+    section.getByRole("heading", { name: "Quem Somos" }),
+  ).toBeVisible();
+  await expect(section.getByText("GUILHERME")).toBeVisible();
+  await expect(section.getByText("MAX", { exact: true })).toBeVisible();
+  await expect(section.getByAltText(/Guilherme, sócio-fundador/)).toBeVisible();
+  await expect(section.getByAltText(/Max, sócio-fundador/)).toBeVisible();
+  await expect(
+    page
+      .getByRole("navigation", { name: "Navegação principal" })
+      .getByRole("link", { name: "Quem somos" }),
+  ).toHaveAttribute("aria-current", "location");
+  await expect(
+    page
+      .getByRole("navigation", { name: "Navegação principal" })
+      .getByRole("link", { name: "Soluções" }),
+  ).not.toHaveAttribute("aria-current", "location");
+});
+
 test("carrossel responde a teclado, controles e arraste", async ({ page }) => {
   await page.goto("/");
   const carousel = page.getByRole("region", { name: "Por dentro da Energy" });
@@ -791,32 +782,31 @@ test("carrossel responde a teclado, controles e arraste", async ({ page }) => {
   await page.keyboard.press("ArrowRight");
   await expect(
     carousel.getByRole("button", {
-      name: /Conhecimento técnico: Tecnologia explicada com clareza., conteúdo atual/i,
-    }),
-  ).toHaveAttribute("aria-current", "true");
-
-  await carousel.getByRole("button", { name: "História anterior" }).click();
-  await expect(
-    carousel.getByRole("button", {
       name: /Planejamento: Cada projeto começa com contexto., conteúdo atual/i,
     }),
   ).toHaveAttribute("aria-current", "true");
 
+  await carousel.getByRole("button", { name: "Slide anterior" }).click();
+  await expect(
+    carousel.getByRole("button", {
+      name: /Atendimento: Uma conversa próxima desde o início., conteúdo atual/i,
+    }),
+  ).toHaveAttribute("aria-current", "true");
+
   const slide = carousel.locator(".company-carousel-stage");
-  await slide.scrollIntoViewIfNeeded();
   const box = await slide.boundingBox();
   expect(box).not.toBeNull();
   if (box) {
-    await page.mouse.move(box.x + box.width * 0.72, box.y + box.height / 2);
+    await page.mouse.move(box.x + box.width * .72, box.y + box.height / 2);
     await page.mouse.down();
-    await page.mouse.move(box.x + box.width * 0.25, box.y + box.height / 2, {
+    await page.mouse.move(box.x + box.width * .25, box.y + box.height / 2, {
       steps: 6,
     });
     await page.mouse.up();
   }
   await expect(
     carousel.getByRole("button", {
-      name: /Conhecimento técnico: Tecnologia explicada com clareza., conteúdo atual/i,
+      name: /Planejamento: Cada projeto começa com contexto., conteúdo atual/i,
     }),
   ).toHaveAttribute("aria-current", "true");
 });

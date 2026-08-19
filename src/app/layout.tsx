@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
+import "./founders.css";
 import "./blog.css";
 import "./landing-enhancements.css";
 import { siteContent as c } from "@/content/landing-page";

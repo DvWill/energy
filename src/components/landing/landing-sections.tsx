@@ -1,14 +1,12 @@
 import {
   Check,
   CircleGauge,
-  ClipboardCheck,
   Flag,
   MessagesSquare,
   Minus,
   Scale,
-  Sparkles,
-  Target,
 } from "lucide-react";
+import Image from "next/image";
 import { Container } from "@/components/ui/container";
 import { siteContent as c } from "@/content/landing-page";
 import {
@@ -22,7 +20,7 @@ import {
   TextReveal,
 } from "@/components/motion/motion-primitives";
 import { SolarEquipmentSection } from "@/components/landing/solar-equipment-section";
-const icons = [Target, ClipboardCheck, MessagesSquare, Sparkles];
+import { withBasePath } from "@/lib/base-path";
 const criteriaIcons = [Flag, MessagesSquare, Scale];
 export function Trust() {
   return (
@@ -45,44 +43,90 @@ export function ProblemSolution() {
 }
 export function Benefits() {
   return (
-    <section id="beneficios" className="section section-soft">
-      <Container>
-        <div className="section-heading motion-heading landing-section-heading">
-          <EyebrowReveal>VALOR PARA O CLIENTE</EyebrowReveal>
-          <TextReveal
-            lines={[
-              {
-                content: (
-                  <>
-                    Uma jornada comercial{" "}
-                    <span className="text-keyword-blue">mais clara.</span>
-                  </>
-                ),
-              },
-            ]}
-          />
-          <p>
-            Benefícios de uma abordagem estruturada — ajuste-os quando a oferta
-            oficial estiver definida.
-          </p>
-          <LineReveal />
+    <div
+      id="quem-somos"
+      className="founders-section"
+      role="region"
+      aria-labelledby="founders-title"
+    >
+      <span className="founders-orbit founders-orbit-left" aria-hidden="true" />
+      <span className="founders-orbit founders-orbit-right" aria-hidden="true" />
+      <Container className="founders-layout founders-layout-group">
+        <div className="founder-column founder-column-guilherme">
+          <div className="founder-portrait founder-portrait-guilherme">
+            <Image
+              src={withBasePath("/images/fundadores/guilherme-v2.png")}
+              alt="Guilherme, sócio-fundador da Energy Soluções"
+              width={1093}
+              height={2100}
+              sizes="(max-width: 680px) 48vw, 32vw"
+              loading="eager"
+            />
+          </div>
+          <div className="founder-caption founder-caption-guilherme">
+            <strong>GUILHERME</strong>
+            <span>SÓCIO-FUNDADOR</span>
+          </div>
         </div>
-        <StaggerGrid className="card-grid" interactive spotlight>
-          {c.benefits.map((x, i) => {
-            const Icon = icons[i];
-            return (
-              <article className="benefit" key={x.title}>
-                <AnimatedIcon>
-                  <Icon aria-hidden="true" />
-                </AnimatedIcon>
-                <h3>{x.title}</h3>
-                <p>{x.text}</p>
-              </article>
-            );
-          })}
-        </StaggerGrid>
+        <Reveal className="founders-copy">
+          <EyebrowReveal>POR TRÁS DA ENERGY</EyebrowReveal>
+          <h2 id="founders-title">
+            <span>Quem</span> <strong>Somos</strong>
+          </h2>
+          <p>
+            Dois sócios, uma missão: transformar o sol em economia, segurança e
+            tranquilidade para nossos clientes.
+          </p>
+          <span className="founders-copy-line" aria-hidden="true" />
+        </Reveal>
+        <div className="founder-column founder-column-max">
+          <div className="founder-portrait founder-portrait-max">
+            <Image
+              src={withBasePath("/images/fundadores/max-v2.png")}
+              alt="Max, sócio-fundador da Energy Soluções"
+              width={983}
+              height={2178}
+              sizes="(max-width: 680px) 48vw, 32vw"
+              loading="eager"
+            />
+          </div>
+          <div className="founder-caption founder-caption-max">
+            <strong>MAX</strong>
+            <span>SÓCIO-FUNDADOR</span>
+          </div>
+        </div>
       </Container>
-    </section>
+      <svg
+        className="founders-wave"
+        viewBox="0 0 1440 100"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <defs>
+          <filter id="founders-wave-glow" x="-10%" y="-80%" width="120%" height="260%">
+            <feGaussianBlur stdDeviation="5" result="blur" />
+          </filter>
+        </defs>
+        <path
+          d="M0 24 C230 2 390 78 720 78 C1050 78 1210 2 1440 24 L1440 100 L0 100 Z"
+          fill="#0A2B49"
+        />
+        <path
+          d="M0 24 C230 2 390 78 720 78 C1050 78 1210 2 1440 24"
+          fill="none"
+          stroke="#ff681d"
+          strokeWidth="8"
+          opacity=".55"
+          filter="url(#founders-wave-glow)"
+        />
+        <path
+          d="M0 24 C230 2 390 78 720 78 C1050 78 1210 2 1440 24"
+          fill="none"
+          stroke="#ff7a2d"
+          strokeWidth="3"
+        />
+      </svg>
+    </div>
   );
 }
 export function Process() {
