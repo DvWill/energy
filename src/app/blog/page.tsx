@@ -44,6 +44,8 @@ async function loadNews(): Promise<NewsItem[]> {
     keywords: [post.title, post.categoryName ?? ""],
     articleUrl: `/blog/${post.slug}`,
     managed: true,
+    content: "",
+    published: true,
   }));
 }
 
@@ -53,8 +55,8 @@ export default async function BlogPage() {
     "@context": "https://schema.org",
     "@type": "Blog",
     name: "Energy Conecta",
-    description: "Feed editorial de resumos sobre energia solar com links para as fontes originais.",
-    blogPost: items.map((item) => ({ "@type": "BlogPosting", headline: item.title, datePublished: item.dateISO, url: item.articleUrl ?? item.sourceUrl, publisher: { "@type": "Organization", name: "Energy Soluções" }, ...(item.sourceUrl ? { isBasedOn: item.sourceUrl } : {}) })),
+    description: "Notícias e conteúdos sobre energia solar publicados pela Energy Soluções.",
+    blogPost: items.map((item) => ({ "@type": "BlogPosting", headline: item.title, datePublished: item.dateISO, url: `/blog/${item.slug}`, publisher: { "@type": "Organization", name: "Energy Soluções" } })),
   };
   return <>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />

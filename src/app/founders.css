@@ -278,10 +278,14 @@ html body .company-editorial .company-title-accent {
 }
 
 @media (max-width: 430px) {
-  .founders-section { min-height: 760px; }
-  .founders-layout.founders-layout-group { min-height: 735px; }
+  .founders-section { min-height: 0; }
+  .founders-layout.founders-layout-group {
+    grid-template-rows: auto auto;
+    min-height: 0;
+    gap: 8px 0;
+  }
   .founders-copy { padding-top: 56px; }
-  .founders-copy p { font-size: .92rem; }
+  .founders-copy p { margin-top: 16px; font-size: .92rem; }
   .founder-column { height: 360px; }
   .founder-caption { bottom: 62px; }
 }

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { listPublishedPosts } from "@/db/queries";
+import { newsData } from "@/content/news-data";
 export const revalidate = 3600;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = (
@@ -19,6 +20,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/privacidade`, changeFrequency: "yearly", priority: 0.2 },
     { url: `${base}/termos`, changeFrequency: "yearly", priority: 0.2 },
     { url: `${base}/blog`, changeFrequency: "weekly", priority: 0.8 },
+    ...newsData.filter((item) => item.published).map((item) => ({
+      url: `${base}/blog/${item.slug}`,
+      lastModified: item.dateISO,
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    })),
     ...blogPosts,
   ];
 }

@@ -22,6 +22,10 @@ function postPayload(data: FormData) {
     subtitle: value(data, "subtitle"),
     summary: value(data, "summary"),
     content: value(data, "content"),
+    highlightLabel: value(data, "highlightLabel"),
+    highlightValue: value(data, "highlightValue"),
+    highlightComplement: value(data, "highlightComplement"),
+    quote: value(data, "quote"),
     sourceName: value(data, "sourceName"),
     sourceUrl: value(data, "sourceUrl"),
     coverImageUrl: value(data, "coverImageUrl"),
@@ -151,6 +155,7 @@ export async function savePostAction(
 
   let db: ReturnType<typeof getDb>;
   let existing: ExistingPost | null = null;
+  let resolvedSlug = parsed.data.slug;
   try {
     db = getDb();
     const [duplicate, current] = await Promise.all([
@@ -179,7 +184,20 @@ export async function savePostAction(
             .limit(1)
         : Promise.resolve([]),
     ]);
-    if (duplicate[0]) {
+    if (duplicate[0] && !id) {
+      for (let suffix = 2; suffix <= 999; suffix += 1) {
+        const candidate = `${parsed.data.slug.slice(0, 156)}-${suffix}`;
+        const match = await db
+          .select({ id: posts.id })
+          .from(posts)
+          .where(eq(posts.slug, candidate))
+          .limit(1);
+        if (!match[0]) {
+          resolvedSlug = candidate;
+          break;
+        }
+      }
+    } else if (duplicate[0]) {
       return {
         error: "O endereço desta publicação já está sendo usado.",
         fields: { slug: ["Escolha outro endereço para a publicação."] },
@@ -228,6 +246,7 @@ export async function savePostAction(
   );
   const payload = {
     ...parsed.data,
+    slug: resolvedSlug,
     status,
     ...resolvedDates,
     content: cleanContent,

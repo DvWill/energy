@@ -88,6 +88,10 @@ export const postInputSchema = z
     content: z
       .string()
       .max(300_000, "O conteúdo ultrapassou o limite permitido."),
+    highlightLabel: z.string().trim().max(120).optional().transform((v) => v || null),
+    highlightValue: z.string().trim().max(120).optional().transform((v) => v || null),
+    highlightComplement: z.string().trim().max(180).optional().transform((v) => v || null),
+    quote: z.string().trim().max(500).optional().transform((v) => v || null),
     sourceName: z
       .string()
       .trim()

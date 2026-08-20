@@ -12236,7 +12236,7 @@ html[data-theme="light"] body .home-flow .solutions-section.solutions-immersive 
 }
 html[data-theme="light"] body .home-flow .solution-panel {
   border-color: rgba(185,56,12,.16) !important;
-  border-radius: 12px;
+  border-radius: 28px;
   background: var(--white) !important;
   box-shadow: 0 18px 44px rgba(105,28,1,.18) !important;
 }

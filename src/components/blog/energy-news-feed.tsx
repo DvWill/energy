@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Bookmark, BookOpen, Calculator, ChartNoAxesCombined, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Compass, ExternalLink, Flame, Home, Leaf, MoreHorizontal, Search, Share2, Sparkles, SunMedium, X, Zap } from "lucide-react";
+import { ArrowRight, Bookmark, BookOpen, Calculator, ChartNoAxesCombined, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Compass, Flame, Home, Leaf, MoreHorizontal, Search, Share2, Sparkles, SunMedium, X, Zap } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Brand } from "@/components/ui/brand";
@@ -38,7 +38,7 @@ export function EnergyNewsFeed({ items }: { items: NewsItem[] }) {
 
   const filtered = useMemo(() => {
     const term = query.trim().toLocaleLowerCase("pt-BR");
-    let result = items.filter((item) => !category || item.category === category);
+    let result = items.filter((item) => item.published && (!category || item.category === category));
     result = result.filter((item) => !term || [item.title, item.excerpt, item.category, item.sourceName ?? "", ...item.keywords].join(" ").toLocaleLowerCase("pt-BR").includes(term));
     if (filter === "saved") result = result.filter((item) => saved.includes(item.id));
     if (filter === "trending") result = result.filter((item) => item.trending);
@@ -57,7 +57,7 @@ export function EnergyNewsFeed({ items }: { items: NewsItem[] }) {
     return next;
   });
   const share = async (item: NewsItem) => {
-    const url = new URL(item.articleUrl ?? item.sourceUrl ?? "/blog", window.location.href).href;
+    const url = new URL(`/blog/${item.slug}`, window.location.href).href;
     try {
       if (navigator.share) await navigator.share({ title: item.title, text: item.excerpt, url });
       else { await navigator.clipboard.writeText(url); setNotice("Link da notícia copiado."); window.setTimeout(() => setNotice(""), 2500); }
@@ -123,15 +123,14 @@ function SearchBox({ query, setQuery }: { query: string; setQuery: (value: strin
 }
 function Trending({ items, onSelect }: { items: NewsItem[]; onSelect: () => void }) {
   const trending = [...items].sort((a, b) => Number(Boolean(b.trending)) - Number(Boolean(a.trending)) || b.views - a.views).slice(0, 3);
-  return <section className="news-trending"><h2><Flame /> EM ALTA AGORA</h2><div>{trending.map((item, index) => <Link href={item.articleUrl ?? item.sourceUrl ?? "/blog"} target={item.articleUrl ? undefined : "_blank"} rel={item.articleUrl ? undefined : "noopener noreferrer"} key={item.id}><b>{String(index + 1).padStart(2, "0")}</b><Image src={withBasePath(item.image)} alt="" width={68} height={68} /><span><strong>{item.title}</strong><small>{item.date}</small></span></Link>)}</div><button type="button" onClick={onSelect}>Ver todas as notícias <ArrowRight /></button></section>;
+  return <section className="news-trending"><h2><Flame /> EM ALTA AGORA</h2><div>{trending.map((item, index) => <Link href={`/blog/${item.slug}`} key={item.id}><b>{String(index + 1).padStart(2, "0")}</b><Image src={withBasePath(item.image)} alt="" width={68} height={68} /><span><strong>{item.title}</strong><small>{item.date}</small></span></Link>)}</div><button type="button" onClick={onSelect}>Ver todas as notícias <ArrowRight /></button></section>;
 }
 function NewsCard({ item, featured, saved, reducedMotion, onSave, onShare }: { item: NewsItem; featured: boolean; saved: boolean; reducedMotion: boolean; onSave: () => void; onShare: () => void }) {
-  const destination = item.articleUrl ?? item.sourceUrl;
-  const external = !item.articleUrl && Boolean(item.sourceUrl);
+  const destination = `/blog/${item.slug}`;
   return <motion.article className={`news-card ${featured ? "featured" : ""}`} initial={reducedMotion ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reducedMotion ? 0 : 0.35 }}>
     <header><span className="news-avatar"><Brand compact /></span><span className="news-author"><strong>Energy Soluções</strong><small>Conteúdo verificado</small></span><span className="news-category">{item.category}</span><MoreHorizontal className="news-more" aria-hidden="true" /></header>
     <div className="news-image"><Image src={withBasePath(item.image)} alt={item.imageAlt} fill loading="lazy" sizes="(max-width: 760px) 100vw, 680px" /></div>
     <div className="news-card-actions"><div><button type="button" onClick={onShare} aria-label={`Compartilhar ${item.title}`}><Share2 /><span>Compartilhar</span></button><button type="button" className={saved ? "saved" : ""} onClick={onSave} aria-pressed={saved} aria-label={saved ? "Remover das notícias salvas" : "Salvar notícia"}><Bookmark /><span>{saved ? "Salva" : "Salvar"}</span></button></div><span><Clock3 /> {item.readTime}</span></div>
-    <div className="news-card-copy"><h2>{destination ? <Link href={destination} target={external ? "_blank" : undefined} rel={external ? "noopener noreferrer" : undefined}>{item.title}</Link> : item.title}</h2><p>{item.excerpt}</p><div className="news-card-meta"><time dateTime={item.dateISO}>{item.date}</time>{item.sourceName && <span>Fonte: {item.sourceName}</span>}</div>{destination && <Link className="news-read-more" href={destination} target={external ? "_blank" : undefined} rel={external ? "noopener noreferrer" : undefined}>Ler notícia completa <ExternalLink /></Link>}</div>
+    <div className="news-card-copy"><h2><Link href={destination}>{item.title}</Link></h2><p>{item.excerpt}</p><div className="news-card-meta"><time dateTime={item.dateISO}>{item.date}</time>{item.sourceName && <span>Fonte: {item.sourceName}</span>}</div><Link className="news-read-more" href={destination}>Ler notícia completa <ArrowRight aria-hidden="true" /></Link></div>
   </motion.article>;
 }
