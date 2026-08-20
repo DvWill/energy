@@ -814,22 +814,46 @@ html[data-theme="light"] body .social-rail .rail-cta {
   .energy-news-page .news-trending { grid-column: 1 / -1; }
 }
 @media (max-width: 560px) {
-  .energy-news-page .news-hero { min-height: 610px; padding: 105px 12px 50px; }
-  .energy-news-page .news-hero h1 { max-width: 100%; font-size: clamp(2.25rem, 11vw, 3.25rem); overflow-wrap: break-word; }
-  .energy-news-page .news-search { min-height: 54px; margin-top: 26px; }
-  .energy-news-page .news-search input { height: 52px; }
-  .energy-news-page .news-stories-shell { width: calc(100vw - 12px); grid-template-columns: minmax(0,1fr); margin-top: 28px; }
+  .energy-news-page .news-hero { min-height: 540px; padding: 102px 14px 38px; }
+  .energy-news-page .news-hero-inner { width: 100%; }
+  .energy-news-page .news-kicker { gap: 6px; font-size: .67rem; letter-spacing: .15em; }
+  .energy-news-page .news-kicker svg { width: 15px; }
+  .energy-news-page .news-hero h1 { max-width: 11ch; margin: 14px auto 10px; font-size: clamp(2rem, 9.5vw, 2.55rem); line-height: .98; letter-spacing: -.045em; overflow-wrap: normal; text-align: center; }
+  .energy-news-page .news-hero > .news-hero-inner > p { max-width: 31ch; margin-inline: auto; font-size: .88rem; line-height: 1.45; text-align: center; }
+  .energy-news-page .news-search { width: calc(100% - 16px); min-height: 48px; gap: 9px; margin-top: 22px; padding-inline: 16px; }
+  .energy-news-page .news-search > svg { width: 18px; }
+  .energy-news-page .news-search input { height: 46px; min-width: 0; font-size: .88rem; }
+  .energy-news-page .news-stories-shell { width: 100%; grid-template-columns: minmax(0,1fr); margin-top: 23px; }
   .energy-news-page .news-story-arrow { display: none; }
-  .energy-news-page .news-categories { padding-inline: 16px; }
-  .energy-news-page .news-surface { width: 100%; margin-top: -22px; border-radius: 24px 24px 0 0; }
-  .energy-news-page .news-layout { padding-inline: 10px; }
-  .energy-news-page .news-feed-heading { align-items: start; }
-  .energy-news-page .news-feed-heading small { padding-top: 8px; }
-  .energy-news-page .news-card > header { padding-inline: 13px; }
-  .energy-news-page .news-category { max-width: 105px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .energy-news-page .news-categories { gap: 10px; padding: 3px 8px 7px; }
+  .energy-news-page .news-categories button { width: 64px; min-width: 64px; gap: 6px; }
+  .energy-news-page .news-categories button > span { width: 50px; height: 50px; border-width: 2px; box-shadow: 0 0 0 3px rgba(255,255,255,.24), inset 0 0 0 1px rgba(255,255,255,.13); }
+  .energy-news-page .news-categories button svg { width: 21px; height: 21px; }
+  .energy-news-page .news-categories button strong { display: block; width: 100%; overflow: hidden; font-size: .61rem; text-overflow: ellipsis; white-space: nowrap; }
+  .energy-news-page .news-surface { width: 100%; margin-top: -12px; border-radius: 22px 22px 0 0; }
+  .energy-news-page .news-layout { gap: 17px; padding: 24px 10px 56px; }
+  .energy-news-page .news-left nav button { padding: 9px 11px; font-size: .72rem; }
+  .energy-news-page .news-feed { gap: 14px; }
+  .energy-news-page .news-feed-heading { display: grid; justify-items: center; gap: 3px; padding-inline: 0; text-align: center; }
+  .energy-news-page .news-feed-heading h2 { font-size: 1.55rem; }
+  .energy-news-page .news-feed-heading small { padding-top: 0; font-size: .67rem; }
+  .energy-news-page .news-card { border-radius: 15px; }
+  .energy-news-page .news-card > header { min-height: 54px; gap: 8px; padding: 9px 11px; }
+  .energy-news-page .news-avatar { width: 32px; height: 32px; }
+  .energy-news-page .news-author strong { font-size: .72rem; }
+  .energy-news-page .news-author small { font-size: .58rem; }
+  .energy-news-page .news-category { max-width: 88px; padding: 5px 7px; overflow: hidden; font-size: .55rem; text-overflow: ellipsis; white-space: nowrap; }
+  .energy-news-page .news-more { width: 17px; }
+  .energy-news-page .news-image { aspect-ratio: 16/8.3; }
   .energy-news-page .news-card-actions button span { display: none; }
-  .energy-news-page .news-card-actions { padding-inline: 12px; }
-  .energy-news-page .news-card-copy { padding-inline: 15px; }
+  .energy-news-page .news-card-actions { padding: 8px 10px 0; }
+  .energy-news-page .news-card-actions button { padding: 5px 6px; }
+  .energy-news-page .news-card-actions svg { width: 15px; height: 15px; }
+  .energy-news-page .news-card-copy { padding: 9px 12px 15px; text-align: center; align-items: center; }
+  .energy-news-page .news-card-copy h2 { font-size: 1.06rem; line-height: 1.2; }
+  .energy-news-page .news-card-copy > p { margin: 7px 0 9px; -webkit-line-clamp: 2; font-size: .78rem; line-height: 1.42; }
+  .energy-news-page .news-card-meta { justify-content: center; gap: 6px 10px; font-size: .61rem; }
+  .energy-news-page .news-read-more { margin-top: 9px; font-size: .7rem; }
   .energy-news-page .news-right { grid-template-columns: 1fr; }
   .energy-news-page .news-trending { grid-column: auto; }
 }
