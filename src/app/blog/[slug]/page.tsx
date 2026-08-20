@@ -74,11 +74,6 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
     category: category?.name ?? "Notícias", date: date.format(post.publishedAt ?? new Date()),
     dateISO: (post.publishedAt ?? new Date()).toISOString(), readTime: `${post.readingTimeMinutes} min de leitura`,
     sourceName: post.sourceName ?? undefined, sourceUrl: post.sourceUrl ?? undefined,
-    highlight: post.highlightLabel && post.highlightValue ? {
-      label: post.highlightLabel, value: post.highlightValue,
-      complement: post.highlightComplement ?? "",
-    } : undefined,
-    quote: post.quote ?? undefined,
     image: post.coverImageUrl ?? "/images/hero-solar-plant.webp", imageAlt: post.coverImageAlt ?? "",
     featured: post.isFeatured, views: 0, keywords: tags.map((tag) => tag.name), published: true, managed: true,
   };

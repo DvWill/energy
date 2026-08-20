@@ -873,32 +873,6 @@ export function PostEditor({
           <FieldError field="content" errors={fieldErrors} />
         </div>
 
-        <details className="editor-disclosure">
-          <summary>
-            <span>Destaque e citação</span>
-            <small>Opcional</small>
-          </summary>
-          <div className="editor-disclosure-content">
-            <p className="disclosure-intro">Realce um dado importante e uma frase-chave no corpo da notícia.</p>
-            <div className="admin-field">
-              <label htmlFor="highlightLabel">Rótulo do destaque</label>
-              <input id="highlightLabel" name="highlightLabel" defaultValue={post?.highlightLabel ?? ""} maxLength={120} placeholder="Ex.: Cobrança adicional" />
-            </div>
-            <div className="admin-field">
-              <label htmlFor="highlightValue">Valor do destaque</label>
-              <input id="highlightValue" name="highlightValue" defaultValue={post?.highlightValue ?? ""} maxLength={120} placeholder="Ex.: R$ 1,885" />
-            </div>
-            <div className="admin-field">
-              <label htmlFor="highlightComplement">Complemento</label>
-              <input id="highlightComplement" name="highlightComplement" defaultValue={post?.highlightComplement ?? ""} maxLength={180} placeholder="Ex.: a cada 100 kWh consumidos" />
-            </div>
-            <div className="admin-field">
-              <label htmlFor="quote">Citação</label>
-              <textarea id="quote" name="quote" defaultValue={post?.quote ?? ""} maxLength={500} rows={3} placeholder="Frase curta para destacar no artigo." />
-            </div>
-          </div>
-        </details>
-
         <details
           className="editor-disclosure"
           open={sourceOptionsOpen}
