@@ -101,6 +101,7 @@ export function ImageUpload({
         <div className="image-preview">
           <Image
             src={value}
+            unoptimized={/^https?:\/\//i.test(value)}
             alt="Prévia da imagem enviada"
             fill
             sizes="320px"

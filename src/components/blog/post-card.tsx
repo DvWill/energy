@@ -56,6 +56,7 @@ export function PostCard({
           {post.coverImageUrl ? (
             <Image
               src={post.coverImageUrl}
+              unoptimized={/^https?:\/\//i.test(post.coverImageUrl)}
               alt={post.coverImageAlt ?? ""}
               fill
               sizes={

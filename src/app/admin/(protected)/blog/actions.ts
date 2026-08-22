@@ -122,6 +122,17 @@ function isSlugConflict(error: unknown) {
   );
 }
 
+function safeErrorDetails(error: unknown) {
+  let current: unknown = error;
+  for (let depth = 0; depth < 3; depth += 1) {
+    if (!current || typeof current !== "object") break;
+    if ("code" in current && typeof current.code === "string")
+      return { name: error instanceof Error ? error.name : "UnknownError", code: current.code.slice(0, 32) };
+    current = "cause" in current ? current.cause : null;
+  }
+  return { name: error instanceof Error ? error.name : "UnknownError" };
+}
+
 export async function savePostAction(
   id: string | null,
   _state: AdminFormState,
@@ -202,7 +213,7 @@ export async function savePostAction(
     existing = current[0] ?? null;
     if (id && !existing) return { error: "Publicação não encontrada." };
   } catch (error) {
-    console.error("Falha ao validar a publicação antes de salvar.", error);
+    console.error("Falha ao validar a publicação antes de salvar.", safeErrorDetails(error));
     return {
       error:
         "Não foi possível acessar o banco agora. Seu texto continua nesta página; tente novamente.",
@@ -314,7 +325,7 @@ export async function savePostAction(
       };
     }
   } catch (error) {
-    console.error("Falha ao salvar a publicação.", error);
+    console.error("Falha ao salvar a publicação.", safeErrorDetails(error));
     if (isSlugConflict(error)) {
       return {
         error: "O endereço desta publicação já está sendo usado.",
@@ -334,7 +345,7 @@ export async function savePostAction(
     revalidatePath("/sitemap.xml");
   } catch (error) {
     // O banco já confirmou a operação; um novo acesso também recompõe o cache.
-    console.error("A publicação foi salva, mas a revalidação falhou.", error);
+    console.error("A publicação foi salva, mas a revalidação falhou.", safeErrorDetails(error));
   }
   redirect(
     `/admin/blog?saved=${payload.status.toLowerCase()}&slug=${encodeURIComponent(payload.slug)}`,

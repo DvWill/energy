@@ -30,6 +30,7 @@ function currencyPattern(value: number) {
     style: "currency",
     currency: "BRL",
   }).format(value);
+  // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp -- formatted numeric text is escaped below
   return new RegExp(
     formatted.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s*"),
   );

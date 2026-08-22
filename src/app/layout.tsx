@@ -6,6 +6,8 @@ import "./blog.css";
 import "./landing-enhancements.css";
 import { siteContent as c } from "@/content/landing-page";
 import { withBasePath } from "@/lib/base-path";
+import { connection } from "next/server";
+import { headers } from "next/headers";
 const geist = Geist({
   subsets: ["latin"],
   display: "swap",
@@ -40,11 +42,13 @@ export const viewport: Viewport = {
   initialScale: 1,
   themeColor: "#f95f1b",
 };
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  if (process.env.GITHUB_PAGES !== "true") await connection();
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html
       lang="pt-BR"
@@ -56,7 +60,7 @@ export default function RootLayout({
     >
       <body>
         <noscript>
-          <style>{`
+          <style nonce={nonce}>{`
             [data-motion-reveal], [data-motion-hero],
             [data-motion-text], [data-motion-text] *,
             [data-motion-image], [data-motion-image] *,

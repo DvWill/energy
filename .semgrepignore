@@ -1,0 +1,10 @@
+.env
+.env.*
+.vercel/
+.next/
+node_modules/
+out/
+artifacts/
+playwright-report/
+test-results/
+*.tsbuildinfo

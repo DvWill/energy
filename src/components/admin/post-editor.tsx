@@ -160,7 +160,7 @@ function normalizedVisualFragment(nodes: ChildNode[]) {
 
 function normalizeVisualEditorHtml(value: string) {
   const container = document.createElement("div");
-  container.innerHTML = value;
+  container.innerHTML = sanitizeEditorHtml(value);
 
   for (const element of Array.from(container.querySelectorAll("b, i"))) {
     const replacement = document.createElement(
@@ -184,6 +184,52 @@ function normalizeVisualEditorHtml(value: string) {
   const normalized = document.createElement("div");
   normalized.append(normalizedVisualFragment(Array.from(container.childNodes)));
   return normalized.innerHTML;
+}
+
+const editorTags = new Set([
+  "P", "BR", "H2", "H3", "H4", "STRONG", "EM", "U", "UL", "OL",
+  "LI", "BLOCKQUOTE", "HR", "A", "IMG", "FIGURE", "FIGCAPTION", "TABLE",
+  "THEAD", "TBODY", "TR", "TH", "TD", "PRE", "CODE",
+]);
+const editorAttributes = new Set([
+  "href", "target", "rel", "src", "alt", "width", "height", "loading",
+]);
+
+function sanitizeEditorHtml(value: string) {
+  const template = document.createElement("template");
+  template.innerHTML = value;
+  for (const element of Array.from(template.content.querySelectorAll("*"))) {
+    if (!editorTags.has(element.tagName)) {
+      element.replaceWith(...Array.from(element.childNodes));
+      continue;
+    }
+    for (const attribute of Array.from(element.attributes)) {
+      const name = attribute.name.toLowerCase();
+      const attributeValue = attribute.value.trim();
+      if (!editorAttributes.has(name) || name.startsWith("on")) {
+        element.removeAttribute(attribute.name);
+        continue;
+      }
+      if (name === "href" && !isEditorUrl(attributeValue, true)) {
+        element.removeAttribute(attribute.name);
+      } else if (name === "src" && !isEditorUrl(attributeValue, false)) {
+        element.removeAttribute(attribute.name);
+      }
+    }
+  }
+  return template.innerHTML;
+}
+
+function isEditorUrl(value: string, allowMailto: boolean) {
+  try {
+    const url = new URL(value, window.location.origin);
+    const protocols = allowMailto
+      ? ["http:", "https:", "mailto:", "tel:"]
+      : ["http:", "https:"];
+    return protocols.includes(url.protocol) && !url.username && !url.password;
+  } catch {
+    return value.startsWith("/") && !value.startsWith("//");
+  }
 }
 
 function isHttpUrl(value: string) {
@@ -253,7 +299,7 @@ function VisualContentEditor({
   );
 
   useEffect(() => {
-    if (editor.current) editor.current.innerHTML = initialHtml.current;
+    if (editor.current) editor.current.innerHTML = sanitizeEditorHtml(initialHtml.current);
   }, []);
 
   const sync = () => {

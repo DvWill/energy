@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { listPublishedPosts } from "@/db/queries";
 import { publicQuerySchema } from "@/lib/blog-validation";
-import { rateLimit } from "@/lib/rate-limit";
+import { clientAddress, rateLimit } from "@/lib/rate-limit";
+import { isVercelRateLimited } from "@/lib/vercel-rate-limit";
 export async function GET(request: Request) {
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";
+  if (await isVercelRateLimited(request)) return NextResponse.json({ message: "Muitas solicitações." }, { status: 429, headers: { "Retry-After": "900", "Cache-Control": "no-store" } });
+  const ip = clientAddress(request.headers);
   if (!rateLimit(`blog:${ip}`, 60)) return NextResponse.json({ message: "Muitas solicitações." }, { status: 429 });
   const url = new URL(request.url); const parsed = publicQuerySchema.safeParse(Object.fromEntries(url.searchParams));
   if (!parsed.success) return NextResponse.json({ message: "Parâmetros inválidos." }, { status: 400 });

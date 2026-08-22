@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { newsData } from "@/content/news-data";
 import type { NewsItem } from "@/content/news-data";
 import { listPublishedPosts } from "@/db/queries";
+import { headers } from "next/headers";
 
 export const metadata: Metadata = {
   title: "Energy Conecta | Notícias de energia solar",
@@ -50,6 +51,7 @@ async function loadNews(): Promise<NewsItem[]> {
 }
 
 export default async function BlogPage() {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   const items = await loadNews();
   const structuredData = {
     "@context": "https://schema.org",
@@ -59,7 +61,7 @@ export default async function BlogPage() {
     blogPost: items.map((item) => ({ "@type": "BlogPosting", headline: item.title, datePublished: item.dateISO, url: `/blog/${item.slug}`, publisher: { "@type": "Organization", name: "Energy Soluções" } })),
   };
   return <>
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />
+    <script nonce={nonce} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />
     <a className="skip-link" href="#conteudo">Pular para o conteúdo</a>
     <SiteHeader />
     <main id="conteudo" className="energy-news-page"><EnergyNewsFeed items={items} /></main>

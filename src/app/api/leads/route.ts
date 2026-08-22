@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { leadSchema } from "@/lib/validations";
+import { clientAddress, rateLimit } from "@/lib/rate-limit";
+import { isVercelRateLimited } from "@/lib/vercel-rate-limit";
 
 const MAX_BODY_BYTES = 32_000;
 
@@ -40,6 +42,17 @@ function payloadTooLargeResponse() {
 }
 
 export async function POST(request: Request) {
+  if (await isVercelRateLimited(request)) {
+    return NextResponse.json(
+      { error: "Muitas solicitações. Tente novamente mais tarde." },
+      { status: 429, headers: { "Retry-After": "900", "Cache-Control": "no-store" } },
+    );
+  }
+  if (!rateLimit(`leads:${clientAddress(request.headers)}`, 10, 15 * 60_000))
+    return NextResponse.json(
+      { message: "Muitas solicitações. Aguarde antes de tentar novamente." },
+      { status: 429, headers: { "Retry-After": "900", "Cache-Control": "no-store" } },
+    );
   if (
     !request.headers
       .get("content-type")

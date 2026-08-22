@@ -15,8 +15,10 @@ import {
   ProblemSolution,
   Process,
 } from "@/components/landing/landing-sections";
+import { headers } from "next/headers";
 
-export default function Home() {
+export default async function Home() {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   const faqStructuredData = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -29,9 +31,10 @@ export default function Home() {
 
   return (
     <>
-      <EntryGateBootstrap />
+      <EntryGateBootstrap nonce={nonce} />
       <EntryCalculatorGate />
       <script
+        nonce={nonce}
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(faqStructuredData).replace(/</g, "\\u003c"),
