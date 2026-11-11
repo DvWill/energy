@@ -180,3 +180,68 @@ html[data-theme="light"] body main#conteudo.home-flow .solution-panel-media {
     padding-top: env(safe-area-inset-top);
   }
 }
+
+/* Testimonials must remain legible on their light surface, regardless of global theme rules. */
+html[data-theme="light"] body main#conteudo.home-flow > .testimonials-section .testimonials-heading > span {
+  color: #f95f1b !important;
+}
+html[data-theme="light"] body main#conteudo.home-flow > .testimonials-section .testimonials-heading h2,
+html[data-theme="light"] body main#conteudo.home-flow > .testimonials-section .testimonials-heading h2 em {
+  color: #0b2b49 !important;
+}
+html[data-theme="light"] body main#conteudo.home-flow > .testimonials-section .testimonials-heading p {
+  color: #475569 !important;
+}
+html[data-theme="light"] body main#conteudo.home-flow > .testimonials-section .testimonials-carousel {
+  overflow: visible;
+  padding-inline: clamp(56px, 5vw, 72px);
+}
+html[data-theme="light"] body main#conteudo.home-flow > .testimonials-section .testimonials-viewport {
+  scroll-padding-inline: 2px;
+}
+html[data-theme="light"] body main#conteudo.home-flow > .testimonials-section .testimonial-video,
+html[data-theme="light"] body main#conteudo.home-flow > .testimonials-section .testimonial-video video {
+  background: #e9eef3;
+}
+html[data-theme="light"] body main#conteudo.home-flow > .testimonials-section .testimonials-nav {
+  z-index: 6;
+  width: 52px;
+  height: 52px;
+  opacity: 1 !important;
+  visibility: visible !important;
+  border: 0;
+  background: #f95f1b !important;
+  color: #fff !important;
+  box-shadow: 0 10px 24px rgba(11, 43, 73, 0.2);
+}
+html[data-theme="light"] body main#conteudo.home-flow > .testimonials-section .testimonials-nav:hover {
+  background: #df4e12 !important;
+  transform: translateY(-50%) scale(1.08);
+}
+html[data-theme="light"] body main#conteudo.home-flow > .testimonials-section .testimonials-nav-previous {
+  left: 0;
+}
+html[data-theme="light"] body main#conteudo.home-flow > .testimonials-section .testimonials-nav-next {
+  right: 0;
+}
+
+@media (max-width: 900px) {
+  html[data-theme="light"] body main#conteudo.home-flow > .testimonials-section .testimonial-video {
+    width: min(44vw, 336px);
+    flex-basis: min(44vw, 336px);
+  }
+}
+
+@media (max-width: 620px) {
+  html[data-theme="light"] body main#conteudo.home-flow > .testimonials-section .testimonials-carousel {
+    padding-inline: 0;
+  }
+  html[data-theme="light"] body main#conteudo.home-flow > .testimonials-section .testimonial-video {
+    width: 78vw;
+    flex-basis: 78vw;
+  }
+  html[data-theme="light"] body main#conteudo.home-flow > .testimonials-section .testimonials-nav {
+    width: 48px;
+    height: 48px;
+  }
+}

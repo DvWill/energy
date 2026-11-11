@@ -55,10 +55,10 @@ export function Benefits() {
         <div className="founder-column founder-column-guilherme">
           <div className="founder-portrait founder-portrait-guilherme">
             <Image
-              src={withBasePath("/images/fundadores/guilherme-v2.png")}
+              src={withBasePath("/images/fundadores/guilherme-recortado.png")}
               alt="Guilherme, sócio-fundador da Energy Soluções"
-              width={1093}
-              height={2100}
+              width={1024}
+              height={1536}
               sizes="(max-width: 680px) 48vw, 32vw"
               loading="eager"
             />
@@ -82,10 +82,10 @@ export function Benefits() {
         <div className="founder-column founder-column-max">
           <div className="founder-portrait founder-portrait-max">
             <Image
-              src={withBasePath("/images/fundadores/max-v2.png")}
+              src={withBasePath("/images/fundadores/max-recortado.png")}
               alt="Max, sócio-fundador da Energy Soluções"
-              width={983}
-              height={2178}
+              width={1024}
+              height={1536}
               sizes="(max-width: 680px) 48vw, 32vw"
               loading="eager"
             />

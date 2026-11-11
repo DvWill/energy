@@ -4,14 +4,11 @@ import Image from "next/image";
 import { ArrowRight, Check, ChevronDown } from "lucide-react";
 import {
   motion,
-  useMotionValue,
   useScroll,
-  useSpring,
   useTransform,
   useInView,
 } from "motion/react";
-import { type PointerEvent, useRef } from "react";
-import { HeroLogo3D } from "@/components/landing/hero-logo-3d";
+import { useRef } from "react";
 import {
   EyebrowReveal,
   MagneticButton,
@@ -19,10 +16,7 @@ import {
   TextReveal,
 } from "@/components/motion/motion-primitives";
 import { siteContent as c } from "@/content/landing-page";
-import {
-  useAccessibleMotion,
-  useFinePointer,
-} from "@/hooks/use-accessible-motion";
+import { useAccessibleMotion } from "@/hooks/use-accessible-motion";
 import {
   heroContainerVariants,
   heroItemVariants,
@@ -36,30 +30,6 @@ export function HeroSection({ primaryCta }: { primaryCta: string }) {
   const ref = useRef<HTMLElement>(null);
   const reduced = useAccessibleMotion();
   const heroInView = useInView(ref, { amount: 0.05 });
-  const finePointer = useFinePointer();
-  const cursorEnabled = finePointer && !reduced;
-  const cursorX = useMotionValue(0);
-  const cursorY = useMotionValue(0);
-  const smoothX = useSpring(cursorX, {
-    stiffness: 90,
-    damping: 22,
-    mass: 0.8,
-  });
-  const smoothY = useSpring(cursorY, {
-    stiffness: 90,
-    damping: 22,
-    mass: 0.8,
-  });
-  const tiltX = useTransform(
-    smoothY,
-    [-motionParallax.cursor, motionParallax.cursor],
-    [2.2, -2.2],
-  );
-  const tiltY = useTransform(
-    smoothX,
-    [-motionParallax.cursor, motionParallax.cursor],
-    [-2.8, 2.8],
-  );
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end start"],
@@ -69,43 +39,12 @@ export function HeroSection({ primaryCta }: { primaryCta: string }) {
     [0, 1],
     [0, motionParallax.heroFar],
   );
-  const layerNear = useTransform(
-    scrollYProgress,
-    [0, 1],
-    [0, motionParallax.heroNear],
-  );
-
-  const moveHero = (event: PointerEvent<HTMLElement>) => {
-    if (!cursorEnabled || event.pointerType !== "mouse") return;
-    if (
-      event.target instanceof Element &&
-      event.target.closest(".hero-logo-model-shell")
-    ) {
-      cursorX.set(0);
-      cursorY.set(0);
-      return;
-    }
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const horizontal = ((event.clientX - bounds.left) / bounds.width - 0.5) * 2;
-    const vertical = ((event.clientY - bounds.top) / bounds.height - 0.5) * 2;
-    cursorX.set(horizontal * motionParallax.cursor);
-    cursorY.set(vertical * motionParallax.cursor);
-  };
-
-  const resetHero = () => {
-    cursorX.set(0);
-    cursorY.set(0);
-  };
-
   return (
     <motion.section
       ref={ref}
       id="inicio"
       className="hero hero-image"
-      data-cursor-motion={cursorEnabled ? "enabled" : "disabled"}
       data-hero-visible={heroInView ? "true" : "false"}
-      onPointerLeave={resetHero}
-      onPointerMove={moveHero}
     >
       <Image
         className="hero-background"
@@ -129,27 +68,27 @@ export function HeroSection({ primaryCta }: { primaryCta: string }) {
         <span className="hero-energy-line hero-energy-line-two" />
       </motion.div>
 
-      <div className="hero-logo-stage">
+      <div aria-hidden="true" className="hero-brand-symbol">
         <motion.div
-          className="hero-logo-scroll-layer"
-          data-motion-parallax={reduced ? "disabled" : "enabled"}
-          style={reduced ? undefined : { y: layerNear }}
+          className="hero-brand-symbol-float"
+          animate={reduced || !heroInView ? { y: 0 } : { y: [-10, 10, -10] }}
+          transition={
+            reduced
+              ? { duration: 0 }
+              : {
+                  duration: 5.6,
+                  ease: motionEase.inOut,
+                  repeat: Infinity,
+                }
+          }
         >
-          <motion.div
-            className="hero-logo-model-motion"
-            style={
-              cursorEnabled
-                ? {
-                    x: smoothX,
-                    y: smoothY,
-                    rotateX: tiltX,
-                    rotateY: tiltY,
-                  }
-                : undefined
-            }
-          >
-            <HeroLogo3D />
-          </motion.div>
+          <Image
+            src={withBasePath("/brand/energy-symbol-yellow.png")}
+            alt=""
+            width={639}
+            height={644}
+            sizes="(max-width: 680px) min(54vw, 240px), (max-width: 1000px) min(40vw, 360px), 460px"
+          />
         </motion.div>
       </div>
 

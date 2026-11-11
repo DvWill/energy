@@ -30,7 +30,7 @@ export function SiteFooter() {
           >
             WhatsApp: {c.contact.whatsappLabel}
           </a>
-          <span>{c.contact.email}</span>
+          <a href={`mailto:${c.contact.email}`}>{c.contact.email}</a>
           <span>{c.contact.location}</span>
         </div>
         <div>

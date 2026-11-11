@@ -25,10 +25,10 @@ export function Brand({
       <span className="brand-adaptive" aria-hidden="true">
         <Image
           className="brand-logo"
-          src={withBasePath("/brand/energy-logo-horizontal-white-orange.png")}
+          src={withBasePath("/brand/energy-logo-horizontal-white-yellow.png")}
           alt=""
           width={1763}
-          height={743}
+          height={744}
           priority
         />
       </span>

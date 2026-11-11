@@ -110,10 +110,7 @@ test("renderiza sem erros de console ou hidratação", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "dark" });
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await expect(page.locator('[data-model-loaded="true"]')).toBeVisible({
-    timeout: 15_000,
-  });
-  await expect(page.locator(".hero-logo-model-fallback")).toHaveCount(0);
+  await expect(page.locator(".hero-logo-stage")).toHaveCount(0);
 
   await configureCalculator(page);
   const result = await revealCalculatorResult(page);
@@ -127,39 +124,6 @@ test("renderiza sem erros de console ou hidratação", async ({ page }) => {
   await page.keyboard.press("Escape");
   await expect(dialog).toHaveCount(0);
   expect(errors).toEqual([]);
-});
-
-test("logo 3D gira por arraste do mouse e por teclado", async ({ page }) => {
-  await page.goto("/");
-  const canvas = page.locator(".hero-logo-model");
-  await expect(page.locator('[data-model-loaded="true"]')).toBeVisible({
-    timeout: 15_000,
-  });
-  await expect(canvas).toHaveAttribute("tabindex", "0");
-
-  const initialRotation = Number(await canvas.getAttribute("data-rotation-y"));
-  const box = await canvas.boundingBox();
-  expect(box).not.toBeNull();
-  if (box) {
-    await page.mouse.move(box.x + box.width * 0.6, box.y + box.height * 0.5);
-    await page.mouse.down();
-    await page.mouse.move(box.x + box.width * 0.78, box.y + box.height * 0.5, {
-      steps: 5,
-    });
-    await page.mouse.up();
-  }
-
-  await expect
-    .poll(async () => Number(await canvas.getAttribute("data-rotation-y")))
-    .not.toBe(initialRotation);
-  await expect(canvas).toHaveAttribute("data-manipulating", "false");
-
-  await canvas.focus();
-  const draggedRotation = Number(await canvas.getAttribute("data-rotation-y"));
-  await page.keyboard.press("ArrowRight");
-  await expect
-    .poll(async () => Number(await canvas.getAttribute("data-rotation-y")))
-    .not.toBe(draggedRotation);
 });
 
 test("jornada essencial da landing page", async ({ page }) => {
@@ -179,6 +143,11 @@ test("jornada essencial da landing page", async ({ page }) => {
       name: "WhatsApp: +55 61 99356-1108",
     }),
   ).toHaveAttribute("href", "https://wa.me/5561993561108");
+  await expect(
+    page.getByRole("contentinfo").getByRole("link", {
+      name: "contato@energysolucoes.net",
+    }),
+  ).toHaveAttribute("href", "mailto:contato@energysolucoes.net");
   await page
     .getByRole("navigation", { name: "Navegação principal" })
     .getByRole("link", { name: "Localização" })
@@ -224,13 +193,13 @@ test("indicadores contam ao entrar na viewport e o mapa permanece acessível", a
   await expect(map).toHaveAttribute("src", /google\.com\/maps/);
 });
 
-test("as nove seções mantêm a ordem e a continuidade visual da página", async ({
+test("as dez seções mantêm a ordem e a continuidade visual da página", async ({
   page,
 }) => {
   await page.goto("/");
 
   const sections = page.locator("main.home-flow > section");
-  await expect(sections).toHaveCount(9);
+  await expect(sections).toHaveCount(10);
   const structure = await sections.evaluateAll((elements) =>
     elements.map((element, index) => {
       const rect = element.getBoundingClientRect();
@@ -253,11 +222,12 @@ test("as nove seções mantêm a ordem e a continuidade visual da página", asyn
     "inicio",
     "calculadora",
     "Resultados da Energy",
-    "solucao",
+    "equipamentos",
     "solucoes",
     "por-dentro-da-energy",
+    "depoimentos",
     "processo",
-    "Comparação de abordagens",
+    undefined,
     "faq",
   ]);
   expect(structure.every(({ height }) => height > 0)).toBe(true);

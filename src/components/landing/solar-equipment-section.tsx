@@ -41,7 +41,7 @@ const equipment: Equipment[] = [
     name: "Inversor solar",
     short: "Converte a energia dos painéis para o padrão utilizado no imóvel.",
     summary: "O inversor recebe a energia em corrente contínua produzida pelos painéis e a converte em corrente alternada, utilizada pelas tomadas e equipamentos elétricos. Ele também controla o funcionamento do sistema, identifica falhas e registra informações sobre a geração.",
-    image: "/assets/equipamentos/inversor-solar.webp",
+    image: "/assets/equipamentos/inversor-ms-g3.png",
     alt: "Inversor solar string moderno",
     tabs: [
       { label: "Principais funções", items: ["Converter a energia produzida pelos painéis.", "Sincronizar o sistema com a rede elétrica.", "Procurar automaticamente o melhor ponto de geração por meio dos MPPTs.", "Desligar o sistema em caso de falta de energia da rede nos modelos on-grid convencionais.", "Disponibilizar monitoramento pelo aplicativo ou portal do fabricante.", "Proteger o sistema contra algumas falhas elétricas."] },
@@ -55,7 +55,7 @@ const equipment: Equipment[] = [
     name: "Microinversores",
     short: "Permitem que os painéis trabalhem de maneira mais independente.",
     summary: "O microinversor é instalado próximo aos painéis, geralmente embaixo deles. Cada equipamento pode atender um ou mais módulos solares e converte a energia em corrente alternada diretamente no telhado. Diferentemente do inversor string, cada grupo de painéis trabalha de forma mais independente.",
-    image: "/assets/equipamentos/microinversor-solar.webp",
+    image: "/assets/equipamentos/microinversor-lynxd.png",
     alt: "Microinversor solar com conectores fotovoltaicos",
     tabs: [
       { label: "Vantagens", items: ["Melhor desempenho quando existem sombras em parte do telhado.", "Permite instalar painéis em diferentes posições e inclinações.", "Possibilita o monitoramento individual de cada painel.", "Facilita futuras ampliações do sistema.", "Uma falha em um painel não compromete toda a geração.", "Trabalha com tensão contínua menor no telhado."] },
@@ -312,7 +312,7 @@ function EquipmentCard({ product, index, selected, onSelect }: { product: Equipm
   return <button type="button" className="equipment-card" data-selected={selected ? "true" : "false"} aria-haspopup="dialog" aria-expanded={selected} aria-controls={selected ? `equipment-dialog-${product.number}` : undefined} onClick={(event) => onSelect(index, event.currentTarget)} aria-label={`Conheça o equipamento ${product.name}`}>
     <span className="equipment-card-number">{product.number}</span>
     {selected && <span className="equipment-card-selected"><i aria-hidden="true" />Selecionado</span>}
-    <span className="equipment-card-media"><Image src={withBasePath(product.image)} alt="" fill priority={index === 0} loading={index === 0 ? "eager" : "lazy"} sizes="(max-width: 760px) 78vw, 25vw" /></span>
+    <span className="equipment-card-media" data-equipment={product.number}><Image src={withBasePath(product.image)} alt="" fill priority={index === 0} loading={index === 0 ? "eager" : "lazy"} sizes="(max-width: 760px) 78vw, 25vw" /></span>
     <strong>{product.name}</strong><span className="equipment-card-short">{product.short}</span><span className="equipment-card-link">Conheça o equipamento <ArrowUpRight aria-hidden="true" /></span>
   </button>;
 }

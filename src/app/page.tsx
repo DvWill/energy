@@ -3,6 +3,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { FaqSection } from "@/components/landing/faq-section";
 import { SolutionsSection } from "@/components/landing/solutions-section";
 import { CompanySection } from "@/components/landing/company-section";
+import { CustomerTestimonialsSection } from "@/components/landing/customer-testimonials-section";
 import { HeroSection } from "@/components/landing/hero-section";
 import { LeadExperience } from "@/components/landing/lead-experience";
 import { EntryCalculatorGate } from "@/components/landing/entry-calculator-gate";
@@ -53,6 +54,7 @@ export default async function Home() {
           <SolutionsSection />
           <Benefits />
           <CompanySection />
+          <CustomerTestimonialsSection />
           <Process />
           <Differentiators />
           <FaqSection />

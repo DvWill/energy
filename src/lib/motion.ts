@@ -36,19 +36,6 @@ export const motionStagger = {
 export const motionParallax = {
   image: 18,
   heroFar: 12,
-  heroNear: 32,
-  cursor: 10,
-};
-
-export const threeMotion = {
-  rotationSeconds: 30,
-  frameRate: 30,
-  maxPixelRatio: 1.5,
-  loadDelayMs: 80,
-  dragSensitivity: 0.012,
-  dragTiltSensitivity: 0.007,
-  maxDragTilt: 0.48,
-  keyboardRotationStep: Math.PI / 18,
 };
 
 export const viewportOnce = {

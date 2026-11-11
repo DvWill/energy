@@ -6,8 +6,7 @@ export const siteContent = {
       "Converse com a Energy sobre energia solar e descubra o caminho mais adequado para a sua necessidade.",
   },
   contact: {
-    // PENDENTE: substituir pelo e-mail comercial oficial.
-    email: "[E-MAIL PENDENTE]",
+    email: "contato@energysolucoes.net",
     whatsappLabel: "+55 61 99356-1108",
     whatsappUrl: "https://wa.me/5561993561108",
     location: "Cidade Ocidental, GO",
