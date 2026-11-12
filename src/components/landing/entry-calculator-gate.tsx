@@ -114,7 +114,7 @@ function EntrySplash({ onComplete }: { onComplete: () => void }) {
       aria-hidden="true"
     >
       <Image
-        src={withBasePath("/brand/energy-logo-horizontal-white-orange.png")}
+        src={withBasePath("/brand/energy-logo-horizontal-white-yellow.png")}
         alt=""
         width={1763}
         height={743}

@@ -2616,6 +2616,7 @@ body {
 }
 .company-story-card img {
   object-fit: cover;
+  object-position: center;
   pointer-events: none;
 }
 .company-story-shade {

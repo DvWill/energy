@@ -19,30 +19,42 @@ import {
   TextReveal,
 } from "@/components/motion/motion-primitives";
 
-const slides = [
+type StorySlide = {
+  src: string;
+  alt: string;
+  eyebrow: string;
+  title: string;
+  imagePosition?: string;
+};
+
+const slides: readonly StorySlide[] = [
   {
-    src: "/images/company/equipe-energy.webp",
+    src: "/images/company/equipe-energy.jpg",
     alt: "Monitoramento inteligente de energia",
     eyebrow: "MONITORAMENTO",
     title: "Acompanhamento inteligente em tempo real.",
+    imagePosition: "center 36%",
   },
   {
-    src: "/images/company/novas-tecnologias.webp",
+    src: "/images/company/novas-tecnologias.jpg",
     alt: "Carregador elétrico de parede em demonstração",
     eyebrow: "NOVAS TECNOLOGIAS",
     title: "Energia em constante evolução.",
+    imagePosition: "center 37%",
   },
   {
-    src: "/images/company/atendimento-proximo.webp",
+    src: "/images/company/atendimento-proximo.jpg",
     alt: "Profissional de atendimento da Energy",
     eyebrow: "ATENDIMENTO",
     title: "Uma conversa próxima desde o início.",
+    imagePosition: "center 42%",
   },
   {
-    src: "/images/company/planejamento.webp",
+    src: "/images/company/planejamento.jpg",
     alt: "Ambiente de planejamento da Energy",
     eyebrow: "PLANEJAMENTO",
     title: "Cada projeto começa com contexto.",
+    imagePosition: "center 38%",
   },
   {
     src: "/images/company/conhecimento-tecnico.webp",
@@ -194,6 +206,7 @@ export function CompanySection() {
                     fill
                     priority={index === 0}
                     sizes="(max-width: 600px) 86vw, (max-width: 1000px) 70vw, 62vw"
+                    style={{ objectPosition: slide.imagePosition ?? "center" }}
                   />
                   <span className="company-story-shade" aria-hidden="true" />
                   <span className="company-story-copy">
